@@ -2,7 +2,9 @@
 #include <ArduinoBLE.h>
 #include "bleUART.h"
 #include "batVestwoods.h"
+#include "bat.h"
 
+// Bluetooth UARTS
 //bleUART myBLE("2b:80:03:b4:76:0a", "6e400000-b5a3-f393-e0a9-e50e24dcca9e", "6e400001-b5a3-f393-e0a9-e50e24dcca9e", "6e400002-b5a3-f393-e0a9-e50e24dcca9e");
 bleUART myBLEs[] = {
   bleUART("2b:80:03:b4:71:d9", "6e400000-b5a3-f393-e0a9-e50e24dcca9e", "6e400001-b5a3-f393-e0a9-e50e24dcca9e", "6e400002-b5a3-f393-e0a9-e50e24dcca9e"),
@@ -20,15 +22,22 @@ bleUART myBLEs[] = {
 40:d6:3c:00:08:30 (DL-40D63C000830)
 */
 
+// battery states
+bat myBATs[] = {
+  bat(4),
+  bat(4),
+  bat(4),
+  bat(4)
+};
 
 //batVestwoods myBAT(myBLE);
-batVestwoods myBATs[] = {
-  batVestwoods(&myBLEs[0]),
-  batVestwoods(&myBLEs[1]),
-  batVestwoods(&myBLEs[2]),
-  batVestwoods(&myBLEs[3])
+batVestwoods * myBMSs[] = {
+  new batVestwoods(&myBLEs[0]),
+  new batVestwoods(&myBLEs[1]),
+  new batVestwoods(&myBLEs[2]),
+  new batVestwoods(&myBLEs[3])
 };
-int batCount = sizeof(myBATs) / sizeof(myBATs[0]);
+int batCount = sizeof(myBMSs) / sizeof(myBMSs[0]);
 int batNum;
 
 int runstate; // 0 = discovery, 1 = run
@@ -99,9 +108,9 @@ void loop() {
   }
   // normal run - run battery engines
   for(int i = 0; i < batCount; i++) {
-    if(myBATs[i].run() < 0) {
+    if(myBMSs[i]->run() < 0) {
       Serial.print("Error running battery ");
-      Serial.println(myBATs[i].myId());
+      Serial.println(myBMSs[i]->myId());
     }
   }
 #if 1
@@ -113,12 +122,12 @@ void loop() {
   // scan all batteries
   for(int i = 0; i < batCount; i++) {
     if(i) delay(50);
-    if(!myBATs[i].poll()) {
+    if(!myBMSs[i]->poll()) {
       Serial.print("Poll failed: ");
-      Serial.println(myBATs[i].myId());
+      Serial.println(myBMSs[i]->myId());
     }
     // test
-    break;
+    //break;
   }
   Serial.println("polls sent");
 #else
@@ -134,9 +143,9 @@ void loop() {
   if(!isPolled) {
     Serial.print("POLL: ");
     Serial.println(batNum);
-    if(!myBATs[batNum].poll()) {
+    if(!myBMSs[batNum].poll()) {
       Serial.print("Poll failed: ");
-      Serial.println(myBATs[batNum].myId());
+      Serial.println(myBMSs[batNum].myId());
       // fall through and advance battery
     } else {
       Serial.println("poll sent");
@@ -146,7 +155,7 @@ void loop() {
   if(isPolled) {
     // busy polling
     // fixme - timeout? or trust the battery driver?
-    if(myBATs[batNum].isBusy()) return;    
+    if(myBMSs[batNum].isBusy()) return;    
   }
   Serial.println("poll done");
   batNum++;

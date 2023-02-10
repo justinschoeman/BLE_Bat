@@ -136,7 +136,7 @@ int bleUART::read(uint8_t * buf, int len) {
   if(i == 0) {
     Serial.print("Read failed: ");
     Serial.println(myId());
-    close();
+    //close();
     return -1;
   }
   return i;
@@ -147,7 +147,7 @@ int bleUART::write(uint8_t * buf, int len) {
   if(!wrCHAR.writeValue(buf, len)) {
     Serial.print("Write failed: ");
     Serial.println(myId());
-    close();
+    //close();
     return -1;
   }
   int i = wrCHAR.valueLength();
