@@ -1,5 +1,24 @@
 #include "batVestwoods.h"
 
+void batVestwoods::logTag(const char *tag) {
+  Serial.print(myId());
+  Serial.print(" : ");
+  Serial.print(tag);
+  Serial.print(" = ");
+}
+
+void batVestwoods::log(const char *tag, int value, int fmt) {
+  return;  
+  logTag(tag);
+  Serial.println(value, fmt);
+}
+
+void batVestwoods::log(const char *tag, double value, int fmt) {
+  return;
+  logTag(tag);
+  Serial.println(value, fmt);
+}
+
 // -1 = error, 0 = run again, 1 = OK
 int batVestwoods::run(void) {
   if (errors > 5) {
@@ -185,168 +204,168 @@ bool batVestwoods::handleRx(int len) {
 }
 
 bool batVestwoods::do0001(void) {
+  int i;
+  float f;
   // 0 - onlineStatus
-  int i = get8();
-  Serial.print("onlineStatus ");
-  Serial.println(i);
+  i = get8();
+  log("onlineStatus", i);
   // 1 - batteriesSeriesNumber
   i = get8();
-  Serial.print("batteriesSeriesNumber ");
-  Serial.println(i);
+  log("batteriesSeriesNumber", i);
+  if(i != bat->numCells) { Serial.println("WARNING BMS REPORTS DIFFERENT CELL COUNT THAN OUR CONFIGURED BATTERY!"); }
   for (int j = 0; j < i; j++) {
     // 2, 3 - cellVoltage (mV)
-    uint16_t k = get16();
-    Serial.print("cellVoltage (mV) ");
-    Serial.println(k);
+    f = get16();
+    f /= 1000.0f;
+    log("cellVoltage", f);
+    if(j < bat->numCells) {
+      bat->cells[j].voltage = f;
+    }
   }
   // 4 - maxCellNumber
   i = get8();
-  Serial.print("maxCellNumber ");
-  Serial.println(i);
+  log("maxCellNumber", i);
+  bat->maxCellVoltageNumber = i - 1;
   // 5,6 - maxCellVoltage
-  i = get16();
-  Serial.print("maxCellVoltage ");
-  Serial.println(i);
+  f = get16();
+  f /= 1000.0f;
+  log("maxCellVoltage", f);
+  bat->maxCellVoltage = f;
   // 7 - minCellNumber
   i = get8();
-  Serial.print("minCellNumber ");
-  Serial.println(i);
+  log("minCellNumber", i);
+  bat->minCellVoltageNumber = i - 1;
   // 8,9 - minCellVoltage
-  i = get16();
-  Serial.print("minCellVoltage ");
-  Serial.println(i);
+  f = get16();
+  f /= 1000.0f;
+  log("minCellVoltage", i);
+  bat->minCellVoltage = f;
   // 10,11 - totalCurrent ( x / 100 - 300 )
-  i = get16();
-  float f = i;
+  f = get16();
   f = (f / 100.0) - 300.0;
-  Serial.print("totalCurrent ");
-  Serial.println(f);
+  log("totalCurrent", f);
+  bat->current = f;
   // 12, 13 - soc (x / 100)
-  i = get16();
-  f = i;
+  f = get16();
   f /= 100.0;
-  Serial.print("soc ");
-  Serial.println(f);
+  log("soc", f);
+  bat->soc = f;
   // 14, 15 - soh (x / 100)
-  i = get16();
-  f = i;
+  f = get16();
   f /= 100.0;
-  Serial.print("soh ");
-  Serial.println(f);
+  log("soh", f);
+  bat->soh = f;
   // 16, 17 - actualCapacity (x / 100)
-  i = get16();
-  f = i;
+  f = get16();
   f /= 100.0;
-  Serial.print("actualCapacity ");
-  Serial.println(f);
+  log("actualCapacity", f);
   // 18, 19 - surplusCapacity (x / 100)
-  i = get16();
-  f = i;
+  f = get16();
   f /= 100.0;
-  Serial.print("surplusCapacity ");
-  Serial.println(f);
+  log("surplusCapacity", f);
   // 20, 21 - nominalCapacity (x / 100)
-  i = get16();
-  f = i;
+  f = get16();
   f /= 100.0;
-  Serial.print("nominalCapacity ");
-  Serial.println(f);
+  log("nominalCapacity", f);
   // 22 - batteriesTemperatureNumber
   i = get8();
-  Serial.print("batteriesTemperatureNumber ");
-  Serial.println(i);
+  log("batteriesTemperatureNumber", i);
   for (int j = 0; j < i; j++) {
     // 23, 24 - cellTemperature (x - 50)
     int k = get16();
     k -= 50;
-    Serial.print("cellTemperature ");
-    Serial.println(k);
+    log("cellTemperature", k);
+    // they do not send all temperatures, so we will populate from min/max
   }
   // 25, 26 - environmentalTemperature
   i = get16();
   i -= 50;
-  Serial.print("environmentalTemperature ");
-  Serial.println(i);
+  log("environmentalTemperature", i);
   // 25, 26 -pcbTemperature
   i = get16();
   i -= 50;
-  Serial.print("pcbTemperature ");
-  Serial.println(i);
+  log("pcbTemperature", i);
+  // reset cell temps..
+  for(int j = 0; j < bat->numCells; j++) bat->cells[j].temperature = -99.0f;
+  bat->temperature = 0;
   // 27 - maxTemperatureCellNumber
   i = get8();
-  Serial.print("maxTemperatureCellNumber ");
-  Serial.println(i);
+  log("maxTemperatureCellNumber", i);
   // 28 - maxTemperatureCellValue
-  i = get8();
-  i -= 50;
-  Serial.print("maxTemperatureCellValue ");
-  Serial.println(i);
+  f = get8();
+  f -= 50.0f;
+  log("maxTemperatureCellValue", f);
+  if(i < 1 || i > bat->numCells) {
+    Serial.print("bad maxTemperatureCellNumber ");
+    Serial.println(i);
+  } else {
+    bat->cells[i - 1].temperature = f;
+    bat->temperature += f;
+  }
   // 29 - minTemperatureCellNumber
   i = get8();
-  Serial.print("minTemperatureCellNumber ");
-  Serial.println(i);
+  log("minTemperatureCellNumber", i);
   // 30 - minTemperatureCellValue
-  i = get8();
-  i -= 50;
-  Serial.print("minTemperatureCellValue ");
-  Serial.println(i);
+  f = get8();
+  f -= 50;
+  log("minTemperatureCellValue", f);
+  if(i < 1 || i > bat->numCells) {
+    Serial.print("bad minTemperatureCellNumber ");
+    Serial.println(i);
+  } else {
+    bat->cells[i - 1].temperature = f;
+    bat->temperature += f;
+  }
+  bat->temperature /= 2.0f; // average
+  for(int j = 0; j < bat->numCells; j++) {
+    if(bat->cells[j].temperature == -99.0f) bat->cells[j].temperature = bat->temperature;
+  }
   // 31 bmsFault1
   i = get8();
-  Serial.print("bmsFault1 ");
-  Serial.println(i, HEX);
+  log("bmsFault1", i, HEX);
   // 32 bmsFault2
   i = get8();
-  Serial.print("bmsFault2 ");
-  Serial.println(i, HEX);
+  log("bmsFault2", i, HEX);
   // 33 bmsAlert1
   i = get8();
-  Serial.print("bmsAlert1 ");
-  Serial.println(i, HEX);
+  log("bmsAlert1", i, HEX);
   // 34 bmsAlert2
   i = get8();
-  Serial.print("bmsAlert2 ");
-  Serial.println(i);
+  log("bmsAlert2", i, HEX);
   // 35 bmsAlert3
   i = get8();
-  Serial.print("bmsAlert3 ");
-  Serial.println(i, HEX);
+  log("bmsAlert3", i, HEX);
   // 36 bmsAlert4
   i = get8();
-  Serial.print("bmsAlert4 ");
-  Serial.println(i, HEX);
+  log("bmsAlert4", i, HEX);
   // 37, 38 u.cycleIndex
   i = get16();
-  Serial.print("u.cycleIndex ");
-  Serial.println(i);
+  log("cycleIndex", i);
   // 39, 40 totalVoltage ( x / 100)
-  i = get16();
-  f = i;
+  f = get16();
   f /= 100.0;
-  Serial.print("u.totalVoltage ");
-  Serial.println(f);
+  log("totalVoltage", f);
+  bat->voltage = f;
   // 41 bmsStatus
   i = get8();
-  Serial.print("bmsStatus ");
-  Serial.println(i, HEX);
+  log("bmsStatus", i, HEX);
   // 42, 43 - totalChargingCapacity
   //i = get16();
-  //Serial.print("totalChargingCapacity ");
-  //Serial.println(i);
+  //log("totalChargingCapacity", i);
   // 44, 45 - totalDischargeCapacity
   //i = get16();
-  //Serial.print("totalDischargeCapacity ");
-  //Serial.println(i);
+  //log("totalDischargeCapacity", i);
   // 46, 47 - totalRechargeTime
   //i = get16();
-  //Serial.print("totalRechargeTime ");
-  //Serial.println(i);
+  //log("totalRechargeTime", i);
   // 48, 49 - totaldischargeTime
   //i = get16();
-  //Serial.print("totaldischargeTime ");
-  //Serial.println(i);
+  //log("totaldischargeTime", i);
   // 50 - batteryType
   //i = get8();
-  //Serial.print("batteryType ");
-  //Serial.println(i);
+  //log("batteryType", i);
+  bat->updateMillis = millis();
+  // test
+  bat->dump();
   return true;
 }

@@ -6,9 +6,9 @@
   based on the basic information required for Pylon CAN protocol
 */
 
-class cell {
+class batCell {
 public:
-  cell(void) {
+  batCell(void) {
     voltage = -1.0f;
     temperature = -1.0f;
   }
@@ -16,13 +16,13 @@ public:
   float temperature;
 };
 
-class bat {
+class batBat {
 public:
   // number of cells
-  bat(int num) {
+  batBat(int num) {
     if(num < 1) num = 1; // sanity check
     numCells = num;
-    cells = new cell[num];
+    cells = new batCell[num];
     nomChargeCurrent = -1.0f;
     nomChargeVoltage = -1.0f;
     nomDischargeCurrent = -1.0f;
@@ -41,13 +41,13 @@ public:
     updateMillis = 0UL;
   }
 
-  ~bat(void) {
+  ~batBat(void) {
     delete cells;
   }
 
   // cell data - not used in pylontech can protocol, but collect for now anyway
   int numCells;
-  cell * cells;
+  batCell * cells;
 
   // nominal charge/discharge parameters
   // populate these if we are not manually derating, so we can detect when the battery derates itself
@@ -73,6 +73,54 @@ public:
   int maxCellVoltageNumber;
   // so we can keep track of changes...
   unsigned long updateMillis;
+
+  // debug
+  void dump(void) {
+    Serial.print("nomChargeCurrent ");
+    Serial.println(nomChargeCurrent);
+    Serial.print("nomChargeVoltage ");
+    Serial.println(nomChargeVoltage);
+    Serial.print("nomDischargeCurrent ");
+    Serial.println(nomDischargeCurrent);
+    Serial.print("chargeCurrent ");
+    Serial.println(chargeCurrent);
+    Serial.print("chargeVoltage ");
+    Serial.println(chargeVoltage);
+    Serial.print("dischargeCurrent ");
+    Serial.println(dischargeCurrent);
+    Serial.print("soh ");
+    Serial.println(soh);
+    Serial.print("soc ");
+    Serial.println(soc);
+    Serial.print("voltage ");
+    Serial.println(voltage);
+    Serial.print("current ");
+    Serial.println(current);
+    Serial.print("temperature ");
+    Serial.println(temperature);
+    for(int i = 0; i < numCells; i++) {
+      Serial.print("Cell ");
+      Serial.print(i);
+      Serial.print(" : ");
+      Serial.print(cells[i].voltage);
+      Serial.print("V ");
+      Serial.print(cells[i].temperature);
+      Serial.print("C");
+      if(i == minCellVoltageNumber) {
+        Serial.print(" min ");
+        Serial.print(minCellVoltage);
+      }
+      if(i == maxCellVoltageNumber) {
+        Serial.print(" max ");
+        Serial.print(maxCellVoltage);
+      }
+      Serial.println();
+    }
+    //float minCellVoltage;
+    //float maxCellVoltage;
+    //int minCellVoltageNumber;
+    //int maxCellVoltageNumber;
+  }
 };
 
 #endif
