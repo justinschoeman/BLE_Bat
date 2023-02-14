@@ -93,9 +93,9 @@ public:
     Serial.print("soc ");
     Serial.println(soc);
     Serial.print("voltage ");
-    Serial.println(voltage);
+    Serial.println(voltage, 3);
     Serial.print("current ");
-    Serial.println(current);
+    Serial.println(current, 3);
     Serial.print("temperature ");
     Serial.println(temperature);
     for(int i = 0; i < numCells; i++) {

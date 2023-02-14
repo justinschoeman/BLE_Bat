@@ -1,3 +1,12 @@
+/*
+TODO:
+
+restart ble channels after x hours (+ random fuzz)
+x reboot processor if battery stale by more than y
+wdt
+
+*/
+
 
 #include <ArduinoBLE.h>
 #include "bleUART.h"
@@ -118,15 +127,32 @@ bool isPolled;
 // main loop
 void loop() {
   // first wait until we discover all devices
-  if (runstate == 0) {
+  if(runstate == 0) {
     loop_discover();
+    if(runstate == 0) {
+      if(millis() > 100000UL) {
+        Serial.println("BLE CONNECT TIMEOUT - TRY REBOOT!");
+        esp_restart();
+        while(1) {}
+      }
+    }
     return;
   }
   // normal run - run battery engines
   for (int i = 0; i < bmsCount; i++) {
+    //Serial.print("RUN BATTERY: ");
+    //Serial.println(i);
     if (myBMSs[i]->run() < 0) {
       Serial.print("Error running battery ");
       Serial.println(myBMSs[i]->myId());
+    }
+  }
+  // if any battery data is waaayyyy too old? reboot
+  for(int i = 0; i < batCount ; i++) {
+    if(millis() - myBATs[i]->updateMillis > 100000UL) {
+      Serial.println("BATTERY STATE WAY TOO OLD - TRY REBOOT!");
+      esp_restart();
+      while(1) {}
     }
   }
   // now run balancer

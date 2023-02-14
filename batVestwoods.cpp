@@ -366,6 +366,7 @@ bool batVestwoods::do0001(void) {
   //log("batteryType", i);
   bat->updateMillis = millis();
   // test
+  Serial.println(myId());
   bat->dump();
   return true;
 }
