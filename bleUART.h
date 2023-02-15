@@ -1,10 +1,23 @@
-#ifndef _ARDUINOBLE_H_
-#define _ARDUINOBLE_H_
+#ifndef _BLE_UART_H_
+#define _BLE_UART_H_
+
+/*
+ * BLE specific implementation of batUART
+ */
 
 #include <ArduinoBLE.h>
+#include "batUART.h"
 
-class bleUART {
+class bleUART : public batUART {
 public:
+  /*
+   * new bleUART instance
+   *
+   * addr = MAC address of target device
+   * svcUUID = Service UUID of UART service
+   * rdUUID = subscribable notification UUID of service
+   * weUUID = writable UUID of service
+   */
   bleUART(const char * addr_, const char * svcUUID_, const char * rdUUID_, const char * wrUUID_) :
     addr(String(addr_)), 
     svcUUID(String(svcUUID_)), 

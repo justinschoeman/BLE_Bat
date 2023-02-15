@@ -111,8 +111,8 @@ int batVestwoods::run(void) {
   return 1;
 }
 
-// fixme... -1 on error, 0 on still busy, 1 on poll complete
-int batVestwoods::poll(void) {
+// return true if a poll message was successfully sent
+bool batVestwoods::poll(void) {
   if (runstate) {
     Serial.println("POLL IN BUSY STATE! IGNORE");
     return true;

@@ -1,12 +1,17 @@
 #ifndef _BATVESTWOODS_H_
 #define _BATVESTWOODS_H_
 
-#include "bleUART.h"
+/*
+ * Vestwoods specific implementation of batBMS
+ */
+
+#include "batBMS.h"
+#include "batUART.h"
 #include "bat.h"
 
-class batVestwoods {
+class batVestwoods : public batBMS {
 public:
-  batVestwoods(bleUART *uart_, batBat * bat_)
+  batVestwoods(batUART *uart_, batBat * bat_)
     : uart(uart_),
       bat(bat_),
       runstate(0),
@@ -24,8 +29,8 @@ public:
   // -1 = error, 0 = run again, 1 = OK
   int run(void);
 
-  // fixme... -1 on error, 0 on still busy, 1 on poll complete
-  int poll(void);
+  // return true if a poll message was successfully sent
+  bool poll(void);
 
   // test if poll operation is still running
   bool isBusy(void) {
@@ -39,7 +44,7 @@ private:
   bool handleRx(int len);
   bool do0001(void);
 
-  bleUART * uart;
+  batUART * uart;
   batBat * bat;
   int runstate;  // 0 = idle, 1 = waiting for rx
   unsigned long runtime;
