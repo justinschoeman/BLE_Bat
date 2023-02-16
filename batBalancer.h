@@ -12,7 +12,7 @@
 // minimum voltage for a single cell before balancing starts
 #define BAL_MIN_VOLTAGE 13.0f
 // minimum difference to trigger discharge
-#define BAL_DIFF 0.05f
+#define BAL_DIFF 0.01f
 
 class balUnit {
 public:
@@ -87,7 +87,7 @@ public:
       } else {
         oldest = BAL_STALE * 2; // force stale, if not yet updated
       }
-      if(units[i].bat->current < min_current) min_current = units[i].bat->current;
+      if(!units[i].active && units[i].bat->current < min_current) min_current = units[i].bat->current;
       if(units[i].bat->voltage < min_voltage) min_voltage = units[i].bat->voltage;
       if(!units[i].active && !units[i].isLockout() && units[i].bat->voltage < min_bal_voltage) min_bal_voltage = units[i].bat->voltage;
     }
