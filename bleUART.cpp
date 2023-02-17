@@ -1,4 +1,5 @@
 #include "bleUART.h"
+#include "config.h"
 
 bool bleUART::discoverDevice(BLEDevice dev_) {
   Serial.print("Test: ");
@@ -36,6 +37,9 @@ bool bleUART::open(void) {
   Serial.println("Connected...");
   connected = true;
   reconnect_time = 0;
+  connect_time = millis();
+  connect_time_fuzz = connect_time & 0x400;
+  connect_time_fuzz *= 100; // semi random time up to ~100s
 
   // get service
   if(!device.discoverService(svcUUID.c_str())) {
@@ -124,6 +128,13 @@ int bleUART::run(void) {
       Serial.println(myId());
       return -1;
     }
+  }
+  // test for restart time
+  if(millis() - connect_time > BAT_CFG_BLE_MAX_CONNECT_TIME + connect_time_fuzz) {
+    Serial.print("CONNECTED TOO LONG - RESTART: ");
+    Serial.println(myId());
+    close();
+    return 0;
   }
   return 1;
 }

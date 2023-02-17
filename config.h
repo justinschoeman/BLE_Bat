@@ -13,5 +13,7 @@
 #define BAT_CFG_CONNECT_TIMEOUT (100UL * 1000UL)
 // max age on any given battery data before we decide it is irretrievably fubar and try a reboot...
 #define BAT_CFG_STATE_TIMEOUT (100UL * 1000UL)
+// maximum time a ble can stay connected before forcing a reconnect
+#define BAT_CFG_BLE_MAX_CONNECT_TIME (6UL * 60UL * 60UL * 1000UL)
 
 #endif

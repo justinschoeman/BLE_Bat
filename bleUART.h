@@ -72,6 +72,8 @@ private:
   bool connected;
   bool found;
   unsigned long reconnect_time;
+  unsigned long connect_time;
+  unsigned long connect_time_fuzz;
 };
 
 #endif

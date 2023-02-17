@@ -1,19 +1,23 @@
 /*
 TODO:
 
-restart ble channels after x hours (+ random fuzz)
+x restart ble channels after x hours (+ random fuzz)
 x reboot processor if battery stale by more than y
-wdt
+x wdt
 
 */
 
+#include <esp_task_wdt.h>
 #include "bleUART.h"
 #include "batBLEManager.h"
 #include "batVestwoods.h"
 #include "batBMSManager.h"
 #include "bat.h"
 #include "batBalancer.h"
+#include "batBank.h"
 #include "config.h"
+
+#define BUZZER_PIN 27
 
 // Bluetooth UARTS
 bleUART* myBLEs[] = {
@@ -29,15 +33,19 @@ batBLEManager myBLEMan(myBLEs, bleCount, BAT_CFG_CONNECT_TIMEOUT);
 // battery states
 batBat* myBATs[] = {
   // 12v batteries
-  new batBat(4),
-  new batBat(4),
-  new batBat(4),
-  new batBat(4)
-  // 12v series bank
+  new batBat(4), // 0
+  new batBat(4), // 1
+  new batBat(4), // 2
+  new batBat(4), // 3
   // daly battery
+  new batBat(16), // 4
+  // 12v series bank
+  new batBat(16), // 5
   // parallel bank
+  new batBat(16) // 6
 };
 int batCount = sizeof(myBATs) / sizeof(myBATs[0]);
+batBank myVestBank(myBATs, 4, myBATs[5], true);
 
 // balancer
 balUnit myUnits[] = {
@@ -64,11 +72,29 @@ batBMSManager myBMSMan(myBMSs, bmsCount, BAT_CFG_POLL_TIME);
 void setup() {
   Serial.begin(115200);
   while (!Serial) {}
-  myBank.init(); // get balancer pins into sane state ASAP
+
+  // get balancer pins into sane state ASAP
+  myBank.init();
+
+  // bleep to indicate reboot
+  pinMode(BUZZER_PIN, OUTPUT);
+  digitalWrite(BUZZER_PIN, LOW);
+  delay(1000);
+  digitalWrite(BUZZER_PIN, HIGH);
+
+  // initialise WDT next - expect some BLE tasks to take up to 5s, so let set it to 10...
+  esp_task_wdt_init(10, true);
+  esp_task_wdt_add(NULL);
+
+  // initialise any other nominal battery state
+
+  // initialise banks
+  myVestBank.init();
 }
 
 // main loop
 void loop() {
+  esp_task_wdt_reset();
   // run BLE manager to discover all required devices
   int i = myBLEMan.run();
   if(i < 0) {
@@ -93,4 +119,10 @@ void loop() {
 
   // now run balancer
   myBank.run();
+
+  // and battery banks
+  // 4 battery vestwoods:
+  myVestBank.run();
+  // parallel bank
+  // can output
 }

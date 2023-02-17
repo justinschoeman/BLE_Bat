@@ -46,7 +46,8 @@ public:
     invert(invert_),
     lastTime(0)
     {}
-  
+
+  // call once in setup
   // initialise balancer and pins
   // call early in setup to make sure balance relays are off!
   void init(void) {
@@ -87,7 +88,7 @@ public:
       } else {
         oldest = BAL_STALE * 2; // force stale, if not yet updated
       }
-      if(!units[i].active && units[i].bat->current < min_current) min_current = units[i].bat->current;
+      if(!units[i].active && !units[i].isLockout() && units[i].bat->current < min_current) min_current = units[i].bat->current;
       if(units[i].bat->voltage < min_voltage) min_voltage = units[i].bat->voltage;
       if(!units[i].active && !units[i].isLockout() && units[i].bat->voltage < min_bal_voltage) min_bal_voltage = units[i].bat->voltage;
     }
@@ -157,6 +158,7 @@ private:
     }
     if(units[unit].active) return;
     units[unit].active = true;
+    units[unit].bat->balancing = true;
   }
 
   // turn a pin off
@@ -168,6 +170,7 @@ private:
     }
     if(!units[unit].active) return;
     units[unit].active = false;
+    units[unit].bat->balancing = false;
     units[unit].lockTime = millis();
   }
 
