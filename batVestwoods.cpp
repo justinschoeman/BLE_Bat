@@ -94,6 +94,9 @@ int batVestwoods::run(void) {
     //Serial.println("process response");
     if (!handleRx(rxo + i)) {
       Serial.println("Bad response!");
+      errors++;
+      runstate = 0;
+      return -1;
     }
     errors = 0;
     runstate = 0;

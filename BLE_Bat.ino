@@ -1,16 +1,8 @@
-/*
-TODO:
-
-x restart ble channels after x hours (+ random fuzz)
-x reboot processor if battery stale by more than y
-x wdt
-
-*/
-
 #include <esp_task_wdt.h>
 #include "bleUART.h"
 #include "batBLEManager.h"
 #include "batVestwoods.h"
+#include "batDaly.h"
 #include "batBMSManager.h"
 #include "bat.h"
 #include "batBalancer.h"
@@ -18,6 +10,9 @@ x wdt
 #include "config.h"
 
 #define BUZZER_PIN 27
+
+#if 0
+// my real bank
 
 // Bluetooth UARTS
 bleUART* myBLEs[] = {
@@ -135,3 +130,65 @@ void loop() {
   // parallel bank
   // can output
 }
+
+#endif
+
+#if 1
+// daly test
+// Bluetooth UARTS
+bleUART* myBLEs[] = {
+  new bleUART("40:d6:3c:00:08:30", "fff0", "fff1", "fff2") // no idea why the lib only finds these by the short handles...
+};
+int bleCount = sizeof(myBLEs) / sizeof(myBLEs[0]);
+// manager for device discovery
+batBLEManager myBLEMan(myBLEs, bleCount, BAT_CFG_CONNECT_TIMEOUT);
+
+// battery states
+batBat* myBATs[] = {
+  // daly battery
+  new batBat(16)
+};
+int batCount = sizeof(myBATs) / sizeof(myBATs[0]);
+
+// BMS drivers
+batBMS* myBMSs[] = {
+  new batDaly(myBLEs[0], myBATs[0])
+};
+int bmsCount = sizeof(myBMSs) / sizeof(myBMSs[0]);
+int bmsNum;
+// manager for group of bms
+batBMSManager myBMSMan(myBMSs, bmsCount, BAT_CFG_POLL_TIME);
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial) {}
+
+  // bleep to indicate reboot
+  pinMode(BUZZER_PIN, OUTPUT);
+  digitalWrite(BUZZER_PIN, LOW);
+  delay(1000);
+  digitalWrite(BUZZER_PIN, HIGH);
+
+  // initialise WDT next - expect some BLE tasks to take up to 5s, so let set it to 10...
+  esp_task_wdt_init(10, true);
+  esp_task_wdt_add(NULL);
+}
+
+// main loop
+void loop() {
+  esp_task_wdt_reset();
+  // run BLE manager to discover all required devices
+  int i = myBLEMan.run();
+  if(i < 0) {
+    Serial.println("ERROR STARTING BLE OR CONNECTING DEVICES - TRY REBOOT!");
+    esp_restart();
+    while(1) {}
+  }
+  if(i == 0) return; // still discovering BLE devices
+  // fall through when all devices discovered...
+
+  // normal run - run bms engines
+  myBMSMan.run();
+}
+
+#endif

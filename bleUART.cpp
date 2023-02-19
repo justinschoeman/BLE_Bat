@@ -50,7 +50,8 @@ bool bleUART::open(void) {
     close();
     return false;
   }
-  Serial.println("Found service");
+  Serial.print("Found service: ");
+  Serial.println(svcUUID);
 
   // get read characteristic
   rdCHAR = device.characteristic(rdUUID.c_str());
@@ -100,6 +101,7 @@ bool bleUART::open(void) {
     close();
     return false;
   }
+
   return true;
 }
 
