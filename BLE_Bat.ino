@@ -87,6 +87,13 @@ void setup() {
   esp_task_wdt_add(NULL);
 
   // initialise any other nominal battery state
+  for(int i = 0; i < 4; i++) {
+    myBATs[i]->nomVoltage = 12.8f;
+    myBATs[i]->nomAH = 200.0f;
+    myBATs[i]->nomChargeCurrent = 100.0f;
+    myBATs[i]->nomChargeVoltage = 14.6f;
+    myBATs[i]->nomDischargeCurrent = 100.0f;
+  }
 
   // initialise banks
   myVestBank.init();
@@ -108,6 +115,7 @@ void loop() {
   // normal run - run bms engines
   myBMSMan.run();
 
+/* disable until all bats implemented
   // if any battery data is waaayyyy too old? reboot
   for(int i = 0; i < batCount ; i++) {
     if(millis() - myBATs[i]->updateMillis > BAT_CFG_STATE_TIMEOUT) {
@@ -116,6 +124,7 @@ void loop() {
       while(1) {}
     }
   }
+*/
 
   // now run balancer
   myBank.run();

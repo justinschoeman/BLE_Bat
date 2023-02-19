@@ -35,7 +35,6 @@ public:
     soc = -1.0f;
     voltage = -1.0f;
     current = -1.0f;
-    ah = -1.0f;
     temperature = -1.0f;
     minCellVoltage = -1.0f;
     maxCellVoltage = -1.0f;
