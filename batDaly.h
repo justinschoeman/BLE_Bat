@@ -17,7 +17,7 @@
 // as far as I can tell, dev_addr is always 0x01
 class batDaly : public batBMS {
 public:
-  batDaly(batUART *uart_, batBat * bat_, uint8_t host_addr_ = 0x80, uint8_t dev_addr_ = 0x01)
+  batDaly(batUART *uart_, batBat * bat_, uint8_t host_addr_ = 0x40, uint8_t dev_addr_ = 0x01)
     : uart(uart_),
       bat(bat_),
       host_addr(host_addr_),
