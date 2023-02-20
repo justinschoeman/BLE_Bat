@@ -69,7 +69,6 @@ public:
   float soc;
   float voltage;
   float current;
-  float ah;
   float temperature;
   // need these for derating
   float minCellVoltage;
@@ -108,8 +107,6 @@ public:
     Serial.println(voltage, 3);
     Serial.print("current ");
     Serial.println(current, 3);
-    Serial.print("ah ");
-    Serial.println(ah);
     Serial.print("temperature ");
     Serial.println(temperature);
     Serial.print("balancing ");

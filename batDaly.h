@@ -55,8 +55,17 @@ private:
   bool sendCommand(uint8_t cmd);
   uint8_t get8(void);
   uint16_t get16(void);
+  uint32_t get32(void);
   bool handleRx(int len);
   bool do90(void);
+  bool do91(void);
+  bool do92(void);
+  bool do93(void);
+  bool do94(void);
+  bool do95(void);
+  bool do96(void);
+  bool do97(void);
+  bool do98(void);
 
   batUART * uart;
   batBat * bat;
