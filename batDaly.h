@@ -24,7 +24,8 @@ public:
       dev_addr(dev_addr_),
       runstate(0),
       errors(0),
-      rxo(0) {
+      rxo(0),
+      pollNum(0) {
     memset(txbuf, 0, sizeof(txbuf));
     txbuf[0] = 0xa5;
     txbuf[1] = host_addr_;
@@ -78,6 +79,8 @@ private:
   uint8_t rxo;  // rx offset into buf
   uint8_t bo;   // scan offset into buf...
   int errors;   // error count
+  uint8_t pollSeq[6] = {0x92, 0x93, 0x94, 0x95, /*0x96, */0x97, 0x98};
+  int pollNum;
 };
 
 #endif

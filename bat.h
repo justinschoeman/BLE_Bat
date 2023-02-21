@@ -68,7 +68,7 @@ public:
   float soh;
   float soc;
   float voltage;
-  float current;
+  float current; // daly - discharge is positive!
   float temperature;
   // need these for derating
   float minCellVoltage;

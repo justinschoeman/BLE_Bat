@@ -7,6 +7,7 @@
 #include "bat.h"
 #include "batBalancer.h"
 #include "batBank.h"
+#include "batDerate.h"
 #include "config.h"
 
 #define BUZZER_PIN 27
@@ -89,6 +90,11 @@ void setup() {
     myBATs[i]->nomChargeVoltage = 14.6f;
     myBATs[i]->nomDischargeCurrent = 100.0f;
   }
+  myBATs[4]->nomVoltage = 51.2f;
+  myBATs[4]->nomAH = 360.0f;
+  myBATs[4]->nomChargeCurrent = 150.0f;
+  myBATs[4]->nomChargeVoltage = 58.4f;
+  myBATs[4]->nomDischargeCurrent = 200.0f;
 
   // initialise banks
   myVestBank.init();
@@ -150,6 +156,8 @@ batBat* myBATs[] = {
 };
 int batCount = sizeof(myBATs) / sizeof(myBATs[0]);
 
+batDerate myDalyDerate(myBATs[0]);
+
 // BMS drivers
 batBMS* myBMSs[] = {
   new batDaly(myBLEs[0], myBATs[0])
@@ -172,6 +180,12 @@ void setup() {
   // initialise WDT next - expect some BLE tasks to take up to 5s, so let set it to 10...
   esp_task_wdt_init(10, true);
   esp_task_wdt_add(NULL);
+
+  myBATs[0]->nomVoltage = 51.2f;
+  myBATs[0]->nomAH = 360.0f;
+  myBATs[0]->nomChargeCurrent = 150.0f;
+  myBATs[0]->nomChargeVoltage = 58.4f;
+  myBATs[0]->nomDischargeCurrent = 200.0f;
 }
 
 // main loop
@@ -189,6 +203,8 @@ void loop() {
 
   // normal run - run bms engines
   myBMSMan.run();
+  // now run derate algos  
+  myDalyDerate.run();
 }
 
 #endif

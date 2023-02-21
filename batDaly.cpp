@@ -257,6 +257,7 @@ bool batDaly::handleRx(int len) {
   return false;
 }
 
+// 90 and 91 are critical - poll the others in sequence...
 bool batDaly::do90(void) {
   int i;
   float f;
@@ -312,7 +313,8 @@ bool batDaly::do91(void) {
   errors = 0;
   bat->updateMillis = millis(); // already have all the critical bits - bump the timestamp now
   //runstate = 0;
-  sendCommand(0x92);
+  sendCommand(pollSeq[pollNum++]);
+  if(pollNum >= sizeof(pollSeq)) pollNum = 0;
   // test
   //Serial.println(myId());
   //bat->dump();
@@ -345,8 +347,7 @@ bool batDaly::do92(void) {
   log("minCellTempNumber", i);
   //bat->minCellVoltageNumber = i;
   errors = 0;
-  //runstate = 0;
-  sendCommand(0x93);
+  runstate = 0;
   return true;
 }
 
@@ -371,8 +372,7 @@ bool batDaly::do93(void) {
   log("residual capacity", i);
   //bat->maxCellVoltage = f;
   errors = 0;
-  //runstate = 0;
-  sendCommand(0x94);
+  runstate = 0;
   return true;
 }
 
@@ -386,9 +386,9 @@ bool batDaly::do94(void) {
     Serial.print("!!! DALY REPORTS DIFFERENT CELL COUNT TO US: ");
     Serial.println(i);
   }
-  // 1 = temperature
+  // 1 = numTemps
   i = get8();
-  log("temperature?", i);
+  log("numTemps", i);
   // 2 = charger status (0 disconnected ,1 connected)
   i = get8();
   log("charger status", i);
@@ -402,8 +402,7 @@ bool batDaly::do94(void) {
   i = get16();
   log("cycles", i);
   errors = 0;
-  //runstate = 0;
-  sendCommand(0x95);
+  runstate = 0;
   return true;
 }
 
@@ -431,8 +430,7 @@ bool batDaly::do95(void) {
     runtime = millis();
     return true; // read some more...
   }
-  //runstate = 0;
-  sendCommand(0x97); // skip 96
+  runstate = 0;
   // test
   Serial.println(myId());
   bat->dump();
@@ -455,8 +453,7 @@ bool batDaly::do96(void) {
     bat->maxCellVoltage = f;
   }
   errors = 0;
-  //runstate = 0;
-  sendCommand(0x97);
+  runstate = 0;
   return true;
 }
 
@@ -466,8 +463,7 @@ bool batDaly::do97(void) {
     log("bal", i, HEX);    
   }
   errors = 0;
-  //runstate = 0;
-  sendCommand(0x98);
+  runstate = 0;
   return true;
 }
 
