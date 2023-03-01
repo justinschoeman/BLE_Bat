@@ -175,7 +175,14 @@ private:
     Serial.println("BANK SERIES RUN!");
     // run through each cell and build output...
     int base = 0;
+    int current_count = 0;
+    out->current = 0.0f;
     for(i = 0; i < count; i++) {
+      // current (average of batteries not being balanced...)
+      if(!bats[i]->balancing) {
+        out->current = bats[i]->current;
+        current_count++;
+      }
       if(i == 0) {
         // chargeCurrent
         out->chargeCurrent = bats[i]->chargeCurrent;
@@ -185,8 +192,6 @@ private:
         out->dischargeCurrent = bats[i]->dischargeCurrent;
         // voltage
         out->voltage = bats[i]->voltage;
-        // current
-        out->current = bats[i]->current;
         // temperature
         out->temperature = bats[i]->temperature;
         // soh
@@ -210,14 +215,12 @@ private:
         if(bats[i]->dischargeCurrent < out->dischargeCurrent) out->dischargeCurrent = bats[i]->dischargeCurrent;
         // voltage (total)
         out->voltage += bats[i]->voltage;
-        // current (average)
-        out->current += bats[i]->current;
-        // temperature (average)
-        out->temperature += bats[i]->temperature;
+        // temperature (maximum)
+        if(bats[i]->temperature > out->temperature) out->temperature += bats[i]->temperature;
         // soh (min)
-        if(bats[i]->soh < out->soh) out->soh = bats[i]->soh;
+        if(bats[i]->soh >= 0.0f && bats[i]->soh < out->soh) out->soh = bats[i]->soh;
         // soc (min)
-        if(bats[i]->soc < out->soc) out->soc = bats[i]->soc;
+        if(bats[i]->soc >= 0.0f && bats[i]->soc < out->soc) out->soc = bats[i]->soc;
         // minCellVoltage
         // minCellVoltageNumber
         if(bats[i]->minCellVoltage < out->minCellVoltage) {
@@ -242,22 +245,142 @@ private:
         }
       }
     }
-    out->current /= (float)count;
+    if(current_count > 0) out->current /= (float)current_count;
     out->temperature /= (float)count;
-    
-/*
-  float chargeCurrent;
-  float chargeVoltage;
-  float dischargeCurrent;
-*/
     out->balancing = false; // not really meaningful at this level?
     out->updateMillis = millis();
   }
 
+/*
+    chargeCurrent = -1.0f;
+    chargeVoltage = -1.0f;
+    dischargeCurrent = -1.0f;
+*/
+
+  void runParallelDerate(void) {
+    Serial.println("BANK PARRALEL RUN (DERATED)");
+  }
+
+  void runParallelNormal(void) {
+    Serial.println("BANK PARRALEL RUN (NORMAL)");
+  }
+  
   void runParallel(void) {
     Serial.println("BANK PARRALEL RUN!");
+    // test if we are derating...
+    bool derate = false;    
     for(int i = 0; i < count; i++) {
+      if(bats[i]->chargeCurrent < bats[i]->nomChargeCurrent) derate = true;
+      if(bats[i]->chargeVoltage < bats[i]->nomChargeVoltage) derate = true;
     }
+    // set charge parameters
+    if(derate) {
+      runParallelDerate();
+    } else {
+      runParallelNormal();
+    }
+    // set remaining parameters
+    out->soh = -1.0f;
+    out->soc = -1.0f;
+    out->voltage = 0.0f;
+    out->current = 0.0f;
+    out->temperature = -1.0f;
+    out->minCellVoltage = -1.0f;
+    out->maxCellVoltage = -1.0f;
+    out->minCellVoltageNumber = -1;
+    out->maxCellVoltageNumber = -1;
+    for(int i = 0; i < count; i++) {
+      // soh (minimum)
+      if(bats[i]->soh >= 0.0f) {
+       if(out->soh < 0.0f) {
+         out->soh = bats[i]->soh;
+       } else {
+        if(bats[i]->soh < out->soh) out->soh = bats[i]->soh;         
+       }
+      }
+      // soc (we could work out actual energy, but really, the minimum will restrict it...)
+      if(bats[i]->soc >= 0.0f) {
+       if(out->soc < 0.0f) {
+         out->soc = bats[i]->soc;
+       } else {
+        if(bats[i]->soc < out->soc) out->soc = bats[i]->soc;
+       }
+      }
+      // voltage (should be equal, but use average...)
+      out->voltage += bats[i]->voltage;
+      // current (total)
+      out->current += bats[i]->current;
+      // temperature (in SA, max we will be the limit...)
+      if(bats[i]->temperature >= 0.0f) {
+       if(out->temperature < 0.0f) {
+         out->temperature = bats[i]->temperature;
+       } else {
+        if(bats[i]->temperature > out->temperature) out->temperature = bats[i]->temperature;
+       }
+      }
+      // minCellVoltage
+      // minCellVoltageNumber
+      if(bats[i]->minCellVoltage >= 0.0f) {
+       if(out->minCellVoltage < 0.0f) {
+         out->minCellVoltage = bats[i]->minCellVoltage;
+         out->minCellVoltageNumber = bats[i]->minCellVoltageNumber;
+       } else {
+        if(bats[i]->minCellVoltage < out->minCellVoltage) {
+          out->minCellVoltage = bats[i]->minCellVoltage;
+          out->minCellVoltageNumber = bats[i]->minCellVoltageNumber;
+        }          
+       }
+      }
+      // maxCellVoltage
+      // maxCellVoltageNumber
+      if(bats[i]->maxCellVoltage >= 0.0f) {
+       if(out->maxCellVoltage < 0.0f) {
+         out->maxCellVoltage = bats[i]->maxCellVoltage;
+         out->maxCellVoltageNumber = bats[i]->maxCellVoltageNumber;
+       } else {
+        if(bats[i]->maxCellVoltage > out->maxCellVoltage) {
+          out->maxCellVoltage = bats[i]->maxCellVoltage;
+          out->maxCellVoltageNumber = bats[i]->maxCellVoltageNumber;
+        }          
+       }
+      }
+    }
+    // average voltage
+    out->voltage /= (float)count;
+    // on the off chance that max and min cell are the same, bump max...
+    if(out->maxCellVoltageNumber >= 0 && out->maxCellVoltageNumber == out->minCellVoltageNumber) {
+      out->maxCellVoltageNumber++;
+      if(out->maxCellVoltageNumber >= out->numCells) out->maxCellVoltageNumber = 0;
+    }
+    // fake cell data
+    float tmpV = out->voltage;
+    float tmpC = out->numCells;
+    if(out->maxCellVoltageNumber >= 0) {
+      tmpV -= out->maxCellVoltage;
+      tmpC -= 1.0f;
+    }
+    if(out->minCellVoltageNumber >= 0) {
+      tmpV -= out->minCellVoltage;
+      tmpC -= 1.0f;
+    }
+    tmpV /= tmpC;
+    for(int i = 0; i < out->numCells; i++) {
+      out->cells[i].temperature = out->temperature;
+      if(i == out->maxCellVoltageNumber) {
+        out->cells[i].voltage = out->maxCellVoltage;
+        continue;
+      }
+      if(i == out->minCellVoltageNumber) {
+        out->cells[i].voltage = out->minCellVoltage;
+        continue;
+      }
+      out->cells[i].voltage = tmpV;
+    }
+    out->balancing = false; // not really meaningful at this level?
+    out->updateMillis = millis();
+/*
+*/
+
   }
 
   batBat ** bats;

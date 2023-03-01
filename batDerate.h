@@ -155,12 +155,6 @@ private:
     bat->chargeCurrent = i;
   }
 
-  // set/limit discharge current
-  void setDischargeI(float i) {
-    if(i > bat->nomDischargeCurrent) i = bat->nomDischargeCurrent;
-    bat->dischargeCurrent = i;
-  }
-
   batBat * bat;
   unsigned long lastMillis;
   bool bulk; // bulk/float mode
@@ -172,7 +166,7 @@ private:
   // fixme - config should be configurable...
   const float cfgCellMaxV = 3.65f; // maximum cell voltage
   const float cfgCellMaxDerateV = cfgCellMaxV - 0.2f; // maximum cell voltage before we derate
-  const float cfgCellMinV = 2.5f; // minimum cell voltage
+  const float cfgCellMinV = 2.8f; // minimum cell voltage
   const float cfgCellMinDerateV = cfgCellMinV + 0.2f; // minimum cell voltage before we derate
   const float cfgCellFloatStartV = 3.6f; // target cell voltage in float mode
   const float cfgCellFloatTargetV = 3.4f; // target charge voltage in float mode

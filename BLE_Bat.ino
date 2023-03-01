@@ -12,7 +12,7 @@
 
 #define BUZZER_PIN 27
 
-#if 0
+#if 1
 // my real bank
 
 // Bluetooth UARTS
@@ -20,7 +20,8 @@ bleUART* myBLEs[] = {
   new bleUART("2b:80:03:b4:71:d9", "6e400000-b5a3-f393-e0a9-e50e24dcca9e", "6e400001-b5a3-f393-e0a9-e50e24dcca9e", "6e400002-b5a3-f393-e0a9-e50e24dcca9e"),
   new bleUART("2b:80:03:b4:76:0a", "6e400000-b5a3-f393-e0a9-e50e24dcca9e", "6e400001-b5a3-f393-e0a9-e50e24dcca9e", "6e400002-b5a3-f393-e0a9-e50e24dcca9e"),
   new bleUART("2b:80:03:b4:76:21", "6e400000-b5a3-f393-e0a9-e50e24dcca9e", "6e400001-b5a3-f393-e0a9-e50e24dcca9e", "6e400002-b5a3-f393-e0a9-e50e24dcca9e"),
-  new bleUART("2b:80:03:b4:78:03", "6e400000-b5a3-f393-e0a9-e50e24dcca9e", "6e400001-b5a3-f393-e0a9-e50e24dcca9e", "6e400002-b5a3-f393-e0a9-e50e24dcca9e")
+  new bleUART("2b:80:03:b4:78:03", "6e400000-b5a3-f393-e0a9-e50e24dcca9e", "6e400001-b5a3-f393-e0a9-e50e24dcca9e", "6e400002-b5a3-f393-e0a9-e50e24dcca9e"),
+  new bleUART("40:d6:3c:00:08:30", "fff0", "fff1", "fff2") // no idea why the lib only finds these by the short handles...
 };
 int bleCount = sizeof(myBLEs) / sizeof(myBLEs[0]);
 // manager for device discovery
@@ -42,6 +43,10 @@ batBat* myBATs[] = {
 };
 int batCount = sizeof(myBATs) / sizeof(myBATs[0]);
 batBank myVestBank(myBATs, 4, myBATs[5], true);
+batBank myAllBank(&myBATs[4], 2, myBATs[6], false);
+
+batDerate myDalyDerate(myBATs[4]);
+batDerate myVestDerate(myBATs[5]);
 
 // balancer
 balUnit myUnits[] = {
@@ -51,10 +56,11 @@ balUnit myUnits[] = {
   balUnit(myBATs[3], 26)
 };
 int balCount = sizeof(myUnits) / sizeof(myUnits[0]);
-balBank myBank(myUnits, balCount, true);
+balBank myBal(myUnits, balCount, true);
 
 // BMS drivers
 batBMS* myBMSs[] = {
+  new batDaly(myBLEs[4], myBATs[4]),
   new batVestwoods(myBLEs[0], myBATs[0]),
   new batVestwoods(myBLEs[1], myBATs[1]),
   new batVestwoods(myBLEs[2], myBATs[2]),
@@ -70,7 +76,7 @@ void setup() {
   while (!Serial) {}
 
   // get balancer pins into sane state ASAP
-  myBank.init();
+  myBal.init();
 
   // bleep to indicate reboot
   pinMode(BUZZER_PIN, OUTPUT);
@@ -98,6 +104,7 @@ void setup() {
 
   // initialise banks
   myVestBank.init();
+  myAllBank.init();
 }
 
 // main loop
@@ -116,7 +123,7 @@ void loop() {
   // normal run - run bms engines
   myBMSMan.run();
 
-/* disable until all bats implemented
+// disable until all bats implemented
   // if any battery data is waaayyyy too old? reboot
   for(int i = 0; i < batCount ; i++) {
     if(millis() - myBATs[i]->updateMillis > BAT_CFG_STATE_TIMEOUT) {
@@ -125,21 +132,25 @@ void loop() {
       while(1) {}
     }
   }
-*/
 
   // now run balancer
-  myBank.run();
+  myBal.run();
 
   // and battery banks
   // 4 battery vestwoods:
   myVestBank.run();
+
+  // derate
+  myDalyDerate.run();
+  myVestDerate.run();
   // parallel bank
+  myAllBank.run();
   // can output
 }
 
 #endif
 
-#if 1
+#if 0
 // daly test
 // Bluetooth UARTS
 bleUART* myBLEs[] = {
