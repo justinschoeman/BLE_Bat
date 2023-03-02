@@ -259,10 +259,69 @@ private:
 
   void runParallelDerate(void) {
     Serial.println("BANK PARRALEL RUN (DERATED)");
+    // when derated, pick the minimum of everything...
+    out->chargeCurrent = -1.0f;
+    out->chargeVoltage = -1.0f;
+    out->dischargeCurrent = -1.0f;
+    for(int i = 0; i < count; i++) {
+      // chargeCurrent (minimum)
+      if(bats[i]->chargeCurrent >= 0.0f) {
+       if(out->chargeCurrent < 0.0f) {
+         out->chargeCurrent = bats[i]->chargeCurrent;
+       } else {
+        if(bats[i]->chargeCurrent < out->chargeCurrent) out->chargeCurrent = bats[i]->chargeCurrent;         
+       }
+      }
+      // chargeVoltage (minimum)
+      if(bats[i]->chargeVoltage >= 0.0f) {
+       if(out->chargeVoltage < 0.0f) {
+         out->chargeVoltage = bats[i]->chargeVoltage;
+       } else {
+        if(bats[i]->chargeVoltage < out->chargeVoltage) out->chargeVoltage = bats[i]->chargeVoltage;         
+       }
+      }
+      // dischargeCurrent (total - never a need to derate this)
+      if(bats[i]->dischargeCurrent >= 0.0f) {
+       if(out->dischargeCurrent < 0.0f) {
+         out->dischargeCurrent = bats[i]->dischargeCurrent;
+       } else {
+        out->dischargeCurrent += bats[i]->dischargeCurrent;         
+       }
+      }
+    }
   }
 
   void runParallelNormal(void) {
     Serial.println("BANK PARRALEL RUN (NORMAL)");
+    out->chargeCurrent = -1.0f;
+    out->chargeVoltage = -1.0f;
+    out->dischargeCurrent = -1.0f;
+    for(int i = 0; i < count; i++) {
+      // chargeCurrent (total)
+      if(bats[i]->chargeCurrent >= 0.0f) {
+       if(out->chargeCurrent < 0.0f) {
+         out->chargeCurrent = bats[i]->chargeCurrent;
+       } else {
+        out->chargeCurrent += bats[i]->chargeCurrent;         
+       }
+      }
+      // chargeVoltage (should be the same, but pick minimum to be safe)
+      if(bats[i]->chargeVoltage >= 0.0f) {
+       if(out->chargeVoltage < 0.0f) {
+         out->chargeVoltage = bats[i]->chargeVoltage;
+       } else {
+        if(bats[i]->chargeVoltage < out->chargeVoltage) out->chargeVoltage = bats[i]->chargeVoltage;         
+       }
+      }
+      // dischargeCurrent (total - never a need to derate this)
+      if(bats[i]->dischargeCurrent >= 0.0f) {
+       if(out->dischargeCurrent < 0.0f) {
+         out->dischargeCurrent = bats[i]->dischargeCurrent;
+       } else {
+        out->dischargeCurrent += bats[i]->dischargeCurrent;         
+       }
+      }
+    }
   }
   
   void runParallel(void) {
@@ -378,9 +437,6 @@ private:
     }
     out->balancing = false; // not really meaningful at this level?
     out->updateMillis = millis();
-/*
-*/
-
   }
 
   batBat ** bats;
