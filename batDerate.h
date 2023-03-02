@@ -122,7 +122,15 @@ public:
         }
       }
     }
-    //bat->dump();
+    Serial.println("DERATE OUT:");
+    Serial.print("chargeVoltage: ");
+    Serial.println(bat->chargeVoltage);
+    Serial.print("chargeCurrent: ");
+    Serial.println(bat->chargeCurrent);
+    Serial.print("dischargeCurrent: ");
+    Serial.println(bat->dischargeCurrent);
+    Serial.print("soc: ");
+    Serial.println(bat->soc);
   }
 
 private:

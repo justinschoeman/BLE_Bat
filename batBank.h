@@ -175,64 +175,100 @@ private:
     Serial.println("BANK SERIES RUN!");
     // run through each cell and build output...
     int base = 0;
-    int current_count = 0;
+    out->chargeCurrent = -1.0f;
+    out->chargeVoltage = -1.0f;
+    out->dischargeCurrent = -1.0f;
+    out->soh = -1.0f;
+    out->soc = -1.0f;
+    out->voltage = 0.0f; // voltage and current must always be provided - no checks required
     out->current = 0.0f;
+    int current_count = 0;
+    out->temperature = -1.0f;
+    out->minCellVoltage = -1.0f;
+    out->maxCellVoltage = -1.0f;
+    out->minCellVoltageNumber = -1;
+    out->maxCellVoltageNumber = -1;
     for(i = 0; i < count; i++) {
+      // chargeCurrent (minimum)
+      if(bats[i]->chargeCurrent >= 0.0f) {
+       if(out->chargeCurrent < 0.0f) {
+         out->chargeCurrent = bats[i]->chargeCurrent;
+       } else {
+        if(bats[i]->chargeCurrent < out->chargeCurrent) out->chargeCurrent = bats[i]->chargeCurrent;         
+       }
+      }
+      // chargeVoltage (total)
+      if(bats[i]->chargeVoltage >= 0.0f) {
+       if(out->chargeVoltage < 0.0f) {
+         out->chargeVoltage = bats[i]->chargeVoltage;
+       } else {
+        out->chargeVoltage += bats[i]->chargeVoltage;         
+       }
+      }
+      // dischargeCurrent (minimum)
+      if(bats[i]->dischargeCurrent >= 0.0f) {
+       if(out->dischargeCurrent < 0.0f) {
+         out->dischargeCurrent = bats[i]->dischargeCurrent;
+       } else {
+        if(bats[i]->dischargeCurrent < out->dischargeCurrent) out->dischargeCurrent = bats[i]->dischargeCurrent;         
+       }
+      }
+      // voltage (total)
+      out->voltage += bats[i]->voltage;
       // current (average of batteries not being balanced...)
       if(!bats[i]->balancing) {
-        out->current = bats[i]->current;
+        out->current += bats[i]->current;
         current_count++;
       }
-      if(i == 0) {
-        // chargeCurrent
-        out->chargeCurrent = bats[i]->chargeCurrent;
-        // chargeVoltage
-        out->chargeVoltage = bats[i]->chargeVoltage;
-        // dischargeCurrent
-        out->dischargeCurrent = bats[i]->dischargeCurrent;
-        // voltage
-        out->voltage = bats[i]->voltage;
-        // temperature
-        out->temperature = bats[i]->temperature;
-        // soh
-        out->soh = bats[i]->soh;
-        // soc
-        out->soc = bats[i]->soc;
-        // minCellVoltage
-        out->minCellVoltage = bats[i]->minCellVoltage;
-        // maxCellVoltage
-        out->maxCellVoltage = bats[i]->maxCellVoltage;
-        // minCellVoltageNumber
-        out->minCellVoltageNumber = bats[i]->minCellVoltageNumber;
-        // maxCellVoltageNumber
-        out->maxCellVoltageNumber = bats[i]->maxCellVoltageNumber;
-      } else {
-        // chargeCurrent (min)
-        if(bats[i]->chargeCurrent < out->chargeCurrent) out->chargeCurrent = bats[i]->chargeCurrent;
-        // chargeVoltage (total)
-        out->chargeVoltage += bats[i]->chargeVoltage;
-        // dischargeCurrent (min)
-        if(bats[i]->dischargeCurrent < out->dischargeCurrent) out->dischargeCurrent = bats[i]->dischargeCurrent;
-        // voltage (total)
-        out->voltage += bats[i]->voltage;
-        // temperature (maximum)
-        if(bats[i]->temperature > out->temperature) out->temperature += bats[i]->temperature;
-        // soh (min)
-        if(bats[i]->soh >= 0.0f && bats[i]->soh < out->soh) out->soh = bats[i]->soh;
-        // soc (min)
-        if(bats[i]->soc >= 0.0f && bats[i]->soc < out->soc) out->soc = bats[i]->soc;
-        // minCellVoltage
-        // minCellVoltageNumber
+      // temperature (in SA, max we will be the limit...)
+      if(bats[i]->temperature >= 0.0f) {
+       if(out->temperature < 0.0f) {
+         out->temperature = bats[i]->temperature;
+       } else {
+        if(bats[i]->temperature > out->temperature) out->temperature = bats[i]->temperature;
+       }
+      }
+      // soh (minimum)
+      if(bats[i]->soh >= 0.0f) {
+       if(out->soh < 0.0f) {
+         out->soh = bats[i]->soh;
+       } else {
+        if(bats[i]->soh < out->soh) out->soh = bats[i]->soh;         
+       }
+      }
+      // soc (we could work out actual energy, but really, the minimum will restrict it...)
+      if(bats[i]->soc >= 0.0f) {
+       if(out->soc < 0.0f) {
+         out->soc = bats[i]->soc;
+       } else {
+        if(bats[i]->soc < out->soc) out->soc = bats[i]->soc;
+       }
+      }
+      // minCellVoltage
+      // minCellVoltageNumber
+      if(bats[i]->minCellVoltage >= 0.0f) {
+       if(out->minCellVoltage < 0.0f) {
+         out->minCellVoltage = bats[i]->minCellVoltage;
+         out->minCellVoltageNumber = bats[i]->minCellVoltageNumber + base;
+       } else {
         if(bats[i]->minCellVoltage < out->minCellVoltage) {
           out->minCellVoltage = bats[i]->minCellVoltage;
           out->minCellVoltageNumber = bats[i]->minCellVoltageNumber + base;
-        }
-        // maxCellVoltage
-        // maxCellVoltageNumber
+        }          
+       }
+      }
+      // maxCellVoltage
+      // maxCellVoltageNumber
+      if(bats[i]->maxCellVoltage >= 0.0f) {
+       if(out->maxCellVoltage < 0.0f) {
+         out->maxCellVoltage = bats[i]->maxCellVoltage;
+         out->maxCellVoltageNumber = bats[i]->maxCellVoltageNumber + base;
+       } else {
         if(bats[i]->maxCellVoltage > out->maxCellVoltage) {
           out->maxCellVoltage = bats[i]->maxCellVoltage;
           out->maxCellVoltageNumber = bats[i]->maxCellVoltageNumber + base;
-        }
+        }          
+       }
       }
       // cells last, as we need to preserve base until we are done...
       for(int j = 0; j < bats[i]->numCells; j++) {
@@ -246,16 +282,9 @@ private:
       }
     }
     if(current_count > 0) out->current /= (float)current_count;
-    out->temperature /= (float)count;
     out->balancing = false; // not really meaningful at this level?
     out->updateMillis = millis();
   }
-
-/*
-    chargeCurrent = -1.0f;
-    chargeVoltage = -1.0f;
-    dischargeCurrent = -1.0f;
-*/
 
   void runParallelDerate(void) {
     Serial.println("BANK PARRALEL RUN (DERATED)");
