@@ -37,16 +37,16 @@ batBLEManager myBLEMan(myBLEs, bleCount, BAT_CFG_CONNECT_TIMEOUT);
 // battery states
 batBat* myBATs[] = {
   // 12v batteries
-  new batBat(4), // 0
-  new batBat(4), // 1
-  new batBat(4), // 2
-  new batBat(4), // 3
+  new batBat("Vest1", 4), // 0
+  new batBat("Vest2", 4), // 1
+  new batBat("Vest3", 4), // 2
+  new batBat("Vest4", 4), // 3
   // daly battery
-  new batBat(16), // 4
+  new batBat("Daly", 16), // 4
   // 12v series bank
-  new batBat(16), // 5
+  new batBat("VestBank", 16), // 5
   // parallel bank
-  new batBat(16) // 6
+  new batBat("Parallel", 16) // 6
 };
 int batCount = sizeof(myBATs) / sizeof(myBATs[0]);
 batBank myVestBank(myBATs, 4, myBATs[5], true);

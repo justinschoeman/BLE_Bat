@@ -21,6 +21,7 @@ public:
   }
 
   void run(void) {
+    // init can data
     if(!isinit) {
       // set up safe initial output
       // should be safe to charge at bac current up to nominal voltage (at best ~50%)
@@ -37,6 +38,7 @@ public:
       isinit = true;
       return;
     }
+
     // update parameters when battery updates (in theory battery drivers should update about 1 per second...)
     // if this is a false assumption, then we may want to move the ramp functions to the output path...
     if(bat->updateMillis != lastMS) {
@@ -85,6 +87,8 @@ public:
       // record last update
       lastMS = bat->updateMillis;
     }
+
+    // run outputs
     if(outMsg) {
       if(millis() - lastOutMS < 5UL) return; // wait at least 5ms...
       switch(outMsg) {

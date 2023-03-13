@@ -19,7 +19,7 @@ public:
 class batBat {
 public:
   // number of cells
-  batBat(int num) {
+  batBat(const char * name_, int num) : name(name_) {
     if(num < 1) num = 1; // sanity check
     numCells = num;
     cells = new batCell[num];
@@ -47,6 +47,12 @@ public:
   ~batBat(void) {
     delete cells;
   }
+
+  // return a unique identifier string for logging
+  String &myId(void) { return name; }
+
+  // id/name
+  String name;
 
   // cell data - not used in pylontech can protocol, but collect for now anyway
   int numCells;
@@ -83,51 +89,80 @@ public:
 
   // debug
   void dump(void) {
-    Serial.print("nomVoltage ");
+    Serial.print(name);
+    Serial.print("_nomVoltage = ");
     Serial.println(nomVoltage);
-    Serial.print("nomAH ");
+    Serial.print(name);
+    Serial.print("_nomAH = ");
     Serial.println(nomAH);
-    Serial.print("nomChargeCurrent ");
+    Serial.print(name);
+    Serial.print("_nomChargeCurrent = ");
     Serial.println(nomChargeCurrent);
-    Serial.print("nomChargeVoltage ");
+    Serial.print(name);
+    Serial.print("_nomChargeVoltage = ");
     Serial.println(nomChargeVoltage);
-    Serial.print("nomDischargeCurrent ");
+    Serial.print(name);
+    Serial.print("_nomDischargeCurrent = ");
     Serial.println(nomDischargeCurrent);
-    Serial.print("chargeCurrent ");
+    Serial.print(name);
+    Serial.print("_chargeCurrent = ");
     Serial.println(chargeCurrent);
-    Serial.print("chargeVoltage ");
+    Serial.print(name);
+    Serial.print("_chargeVoltage = ");
     Serial.println(chargeVoltage);
-    Serial.print("dischargeCurrent ");
+    Serial.print(name);
+    Serial.print("_dischargeCurrent = ");
     Serial.println(dischargeCurrent);
-    Serial.print("soh ");
+    Serial.print(name);
+    Serial.print("_soh = ");
     Serial.println(soh);
-    Serial.print("soc ");
+    Serial.print(name);
+    Serial.print("_soc = ");
     Serial.println(soc);
-    Serial.print("voltage ");
+    Serial.print(name);
+    Serial.print("_voltage = ");
     Serial.println(voltage, 3);
-    Serial.print("current ");
+    Serial.print(name);
+    Serial.print("_current = ");
     Serial.println(current, 3);
-    Serial.print("temperature ");
+    Serial.print(name);
+    Serial.print("_temperature = ");
     Serial.println(temperature);
-    Serial.print("balancing ");
+    Serial.print(name);
+    Serial.print("_balancing = ");
     Serial.println(balancing);
+    Serial.print(name);
+    Serial.print("_minCellVoltageNumber = ");
+    Serial.println(minCellVoltageNumber);
+    Serial.print(name);
+    Serial.print("_minCellVoltage = ");
+    Serial.println(minCellVoltage);
+    Serial.print(name);
+    Serial.print("_maxCellVoltageNumber = ");
+    Serial.println(maxCellVoltageNumber);
+    Serial.print(name);
+    Serial.print("_maxCellVoltage = ");
+    Serial.println(maxCellVoltage);
     for(int i = 0; i < numCells; i++) {
-      Serial.print("Cell ");
+      Serial.print(name);
+      Serial.print("_CellV_");
       Serial.print(i);
-      Serial.print(" : ");
-      Serial.print(cells[i].voltage, 3);
-      Serial.print("V ");
-      Serial.print(cells[i].temperature);
-      Serial.print("C");
-      if(i == minCellVoltageNumber) {
-        Serial.print(" min ");
-        Serial.print(minCellVoltage, 3);
-      }
-      if(i == maxCellVoltageNumber) {
-        Serial.print(" max ");
-        Serial.print(maxCellVoltage, 3);
-      }
-      Serial.println();
+      Serial.print(" = ");
+      Serial.println(cells[i].voltage, 3);
+      Serial.print(name);
+      Serial.print("_CellT_");
+      Serial.print(i);
+      Serial.print(" = ");
+      Serial.println(cells[i].temperature);
+      //if(i == minCellVoltageNumber) {
+      //  Serial.print(" min ");
+      //  Serial.print(minCellVoltage, 3);
+      //}
+      //if(i == maxCellVoltageNumber) {
+      //  Serial.print(" max ");
+      //  Serial.print(maxCellVoltage, 3);
+      //}
+      //Serial.println();
     }
   }
 };
