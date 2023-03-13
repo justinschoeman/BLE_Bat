@@ -218,7 +218,7 @@ bool batVestwoods::do0001(void) {
   if(i != bat->numCells) { Serial.println("WARNING BMS REPORTS DIFFERENT CELL COUNT THAN OUR CONFIGURED BATTERY!"); }
   for (int j = 0; j < i; j++) {
     // 2, 3 - cellVoltage (mV)
-    f = get16();
+    f = (get16() & 0x7fffU); // no idea why the high bit is sometimes 1...
     f /= 1000.0f;
     log("cellVoltage", f);
     if(j < bat->numCells) {
@@ -247,7 +247,7 @@ bool batVestwoods::do0001(void) {
   f = get16();
   f = (f / 100.0) - 300.0;
   log("totalCurrent", f);
-  bat->current = f;
+  bat->current = -f; // discharge is positive...
   // 12, 13 - soc (x / 100)
   f = get16();
   f /= 100.0;

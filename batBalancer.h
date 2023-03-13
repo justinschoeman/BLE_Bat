@@ -4,13 +4,13 @@
 #include "bat.h"
 
 // ms to ignore a cell after a balance event
-#define BAL_LOCKOUT 30000UL
+#define BAL_LOCKOUT 10000UL
 // if data is older than this, consider battery data stale and unreliable
 #define BAL_STALE   15000UL
 // minimum charge current (+ve for charge) before balancing starts
-#define BAL_MIN_CURRENT -1.0f
+#define BAL_MIN_CURRENT 0.0f
 // minimum voltage for a single cell before balancing starts
-#define BAL_MIN_VOLTAGE 13.0f
+#define BAL_MIN_VOLTAGE 13.5f
 // minimum difference to trigger discharge
 #define BAL_DIFF 0.01f
 
@@ -108,7 +108,7 @@ public:
     }
     // 2 - check for start conditions
     // min current
-    if(min_current < BAL_MIN_CURRENT) {
+    if(-min_current < BAL_MIN_CURRENT) {
       Serial.println("CURRENT TOO LOW - STOPPING BALANCER!");
       stopAll();
       return;

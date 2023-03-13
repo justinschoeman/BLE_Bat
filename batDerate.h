@@ -172,6 +172,20 @@ private:
   unsigned long lvLockoutMillis;
 
   // fixme - config should be configurable...
+#if 1
+  // minimum from gc_solar specs
+  const float cfgCellMaxV = BAT_CFG_CELL_MAX_V; // maximum cell voltage
+  const float cfgCellMaxDerateV = 3.45f; // maximum cell voltage before we derate
+  // nom 3.2
+  const float cfgCellMinDerateV = 3.0f; // minimum cell voltage before we derate
+  const float cfgCellMinV = 2.8f; // minimum cell voltage
+  const float cfgCellFloatStartV = 3.59f; // target minimum cell voltage in float mode
+  const float cfgCellFloatTargetV = 3.4f; // target charge voltage in float mode
+  const float cfgCellFloatEndV = 3.35f; // end float before this voltage
+  const unsigned long cfgLvLockoutMillis = (5UL * 60UL * 1000UL); // min low voltage recovery time before we restore dischare caps
+  const unsigned long cfgFloatMillis = (30UL * 60UL * 1000UL); // must be in float conditions for at least this long before activating float mode
+#else
+  // max lifepo4
   const float cfgCellMaxV = 3.65f; // maximum cell voltage
   const float cfgCellMaxDerateV = cfgCellMaxV - 0.2f; // maximum cell voltage before we derate
   const float cfgCellMinV = 2.8f; // minimum cell voltage
@@ -181,6 +195,7 @@ private:
   const float cfgCellFloatEndV = 3.35f; // end float before this voltage
   const unsigned long cfgLvLockoutMillis = (5UL * 60UL * 1000UL); // min low voltage recovery time before we restore dischare caps
   const unsigned long cfgFloatMillis = (30UL * 60UL * 1000UL); // must be in float conditions for at least this long before activating float mode
+#endif
 };
 
 #endif

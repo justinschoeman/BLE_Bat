@@ -180,6 +180,7 @@ private:
     out->dischargeCurrent = -1.0f;
     out->soh = -1.0f;
     out->soc = -1.0f;
+    float soc_tot = 0.0f; // total bank storage
     out->voltage = 0.0f; // voltage and current must always be provided - no checks required
     out->current = 0.0f;
     int current_count = 0;
@@ -370,6 +371,7 @@ private:
     // set remaining parameters
     out->soh = -1.0f;
     out->soc = -1.0f;
+    float soc_tot = 0.0f; // total bank storage
     out->voltage = 0.0f;
     out->current = 0.0f;
     out->temperature = -1.0f;
@@ -387,12 +389,15 @@ private:
        }
       }
       // soc (we could work out actual energy, but really, the minimum will restrict it...)
+      // actually, with severely mismatched banks, large SOC differences develop in mid-ranage, 
+      // but self correct near the limits.
+      // rather use total energy...
       if(bats[i]->soc >= 0.0f) {
-       if(out->soc < 0.0f) {
-         out->soc = bats[i]->soc;
-       } else {
-        if(bats[i]->soc < out->soc) out->soc = bats[i]->soc;
-       }
+        if(out->soc < 0.0f) {
+          out->soc = 0.0f;
+        }
+        out->soc += bats[i]->soc * bats[i]->nomVoltage * bats[i]->nomAH;
+        soc_tot += bats[i]->nomVoltage * bats[i]->nomAH;
       }
       // voltage (should be equal, but use average...)
       out->voltage += bats[i]->voltage;
@@ -435,6 +440,8 @@ private:
     }
     // average voltage
     out->voltage /= (float)count;
+    // total energy soc
+    if(soc_tot > 0.0f) out->soc /= soc_tot;
     // on the off chance that max and min cell are the same, bump max...
     if(out->maxCellVoltageNumber >= 0 && out->maxCellVoltageNumber == out->minCellVoltageNumber) {
       out->maxCellVoltageNumber++;

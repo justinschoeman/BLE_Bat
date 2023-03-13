@@ -1,3 +1,9 @@
+/*
+21:20:47.842 -> SS: 5
+21:20:47.842 -> MOSI: 23
+21:20:47.842 -> MISO: 19
+21:20:47.842 -> SCK: 18
+*/
 #include <esp_task_wdt.h>
 #include "bleUART.h"
 #include "batBLEManager.h"
@@ -8,6 +14,7 @@
 #include "batBalancer.h"
 #include "batBank.h"
 #include "batDerate.h"
+#include "outPylonCAN.h"
 #include "config.h"
 
 #define BUZZER_PIN 27
@@ -56,7 +63,7 @@ balUnit myUnits[] = {
   balUnit(myBATs[3], 26)
 };
 int balCount = sizeof(myUnits) / sizeof(myUnits[0]);
-balBank myBal(myUnits, balCount, true);
+balBank myBal(myUnits, balCount, false);
 
 // BMS drivers
 batBMS* myBMSs[] = {
@@ -70,6 +77,9 @@ int bmsCount = sizeof(myBMSs) / sizeof(myBMSs[0]);
 int bmsNum;
 // manager for group of bms
 batBMSManager myBMSMan(myBMSs, bmsCount, BAT_CFG_POLL_TIME);
+
+// CAN output
+outPylonCAN myOut(myBATs[6]);
 
 void setup() {
   Serial.begin(115200);
@@ -93,13 +103,13 @@ void setup() {
     myBATs[i]->nomVoltage = 12.8f;
     myBATs[i]->nomAH = 200.0f;
     myBATs[i]->nomChargeCurrent = 100.0f;
-    myBATs[i]->nomChargeVoltage = 14.6f;
+    myBATs[i]->nomChargeVoltage = BAT_CFG_CELL_MAX_V * 4.0f;
     myBATs[i]->nomDischargeCurrent = 100.0f;
   }
   myBATs[4]->nomVoltage = 51.2f;
   myBATs[4]->nomAH = 360.0f;
   myBATs[4]->nomChargeCurrent = 150.0f;
-  myBATs[4]->nomChargeVoltage = 58.4f;
+  myBATs[4]->nomChargeVoltage = BAT_CFG_CELL_MAX_V * 16.0f;
   myBATs[4]->nomDischargeCurrent = 200.0f;
 
   // initialise banks
@@ -146,6 +156,43 @@ void loop() {
   // parallel bank
   myAllBank.run();
   // can output
+  myOut.run();
+
+  // test dump
+  Serial.print("Daly: ");
+  Serial.print(myBATs[4]->voltage);
+  Serial.print(" ");
+  Serial.print(myBATs[4]->soc);
+  Serial.print(" ");
+  Serial.println(myBATs[4]->current);
+  Serial.print("Vest: ");
+  Serial.print(myBATs[5]->voltage);
+  Serial.print(" ");
+  Serial.print(myBATs[5]->soc);
+  Serial.print(" ");
+  Serial.print(myBATs[0]->voltage);
+  Serial.print(" ");
+  Serial.print(myBATs[1]->voltage);
+  Serial.print(" ");
+  Serial.print(myBATs[2]->voltage);
+  Serial.print(" ");
+  Serial.print(myBATs[3]->voltage);
+  Serial.print(" ");
+  Serial.print(myBATs[0]->current);
+  Serial.print(" ");
+  Serial.print(myBATs[1]->current);
+  Serial.print(" ");
+  Serial.print(myBATs[2]->current);
+  Serial.print(" ");
+  Serial.print(myBATs[3]->current);
+  Serial.print(" ");
+  Serial.println(myBATs[5]->current);
+  Serial.print("Parl: ");
+  Serial.print(myBATs[6]->voltage);
+  Serial.print(" ");
+  Serial.print(myBATs[6]->soc);
+  Serial.print(" ");
+  Serial.println(myBATs[6]->current);
 }
 
 #endif

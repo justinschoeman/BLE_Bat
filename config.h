@@ -15,5 +15,7 @@
 #define BAT_CFG_STATE_TIMEOUT (100UL * 1000UL)
 // maximum time a ble can stay connected before forcing a reconnect
 #define BAT_CFG_BLE_MAX_CONNECT_TIME (6UL * 60UL * 60UL * 1000UL)
+// maximum cell voltage
+#define BAT_CFG_CELL_MAX_V 3.60f
 
 #endif
