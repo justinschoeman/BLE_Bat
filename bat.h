@@ -88,22 +88,28 @@ public:
   bool balancing;
 
   // debug
-  void dump(void) {
-    Serial.print(name);
-    Serial.print("_nomVoltage = ");
-    Serial.println(nomVoltage);
-    Serial.print(name);
-    Serial.print("_nomAH = ");
-    Serial.println(nomAH);
-    Serial.print(name);
-    Serial.print("_nomChargeCurrent = ");
-    Serial.println(nomChargeCurrent);
-    Serial.print(name);
-    Serial.print("_nomChargeVoltage = ");
-    Serial.println(nomChargeVoltage);
-    Serial.print(name);
-    Serial.print("_nomDischargeCurrent = ");
-    Serial.println(nomDischargeCurrent);
+  // l0 = only dynamic parameters
+  // l1 = include cell voltages
+  // l2 = include cell temperatures
+  // l3 = include nominals
+  void dump(int level = 0) {
+    if(level > 2) {
+      Serial.print(name);
+      Serial.print("_nomVoltage = ");
+      Serial.println(nomVoltage);
+      Serial.print(name);
+      Serial.print("_nomAH = ");
+      Serial.println(nomAH);
+      Serial.print(name);
+      Serial.print("_nomChargeCurrent = ");
+      Serial.println(nomChargeCurrent);
+      Serial.print(name);
+      Serial.print("_nomChargeVoltage = ");
+      Serial.println(nomChargeVoltage);
+      Serial.print(name);
+      Serial.print("_nomDischargeCurrent = ");
+      Serial.println(nomDischargeCurrent);
+    }
     Serial.print(name);
     Serial.print("_chargeCurrent = ");
     Serial.println(chargeCurrent);
@@ -136,33 +142,26 @@ public:
     Serial.println(minCellVoltageNumber);
     Serial.print(name);
     Serial.print("_minCellVoltage = ");
-    Serial.println(minCellVoltage);
+    Serial.println(minCellVoltage, 3);
     Serial.print(name);
     Serial.print("_maxCellVoltageNumber = ");
     Serial.println(maxCellVoltageNumber);
     Serial.print(name);
     Serial.print("_maxCellVoltage = ");
-    Serial.println(maxCellVoltage);
-    for(int i = 0; i < numCells; i++) {
+    Serial.println(maxCellVoltage, 3);
+    for(int i = 0; level > 0 && i < numCells; i++) {
       Serial.print(name);
       Serial.print("_CellV_");
       Serial.print(i);
       Serial.print(" = ");
       Serial.println(cells[i].voltage, 3);
+    }
+    for(int i = 0; level > 1 && i < numCells; i++) {
       Serial.print(name);
       Serial.print("_CellT_");
       Serial.print(i);
       Serial.print(" = ");
       Serial.println(cells[i].temperature);
-      //if(i == minCellVoltageNumber) {
-      //  Serial.print(" min ");
-      //  Serial.print(minCellVoltage, 3);
-      //}
-      //if(i == maxCellVoltageNumber) {
-      //  Serial.print(" max ");
-      //  Serial.print(maxCellVoltage, 3);
-      //}
-      //Serial.println();
     }
   }
 };

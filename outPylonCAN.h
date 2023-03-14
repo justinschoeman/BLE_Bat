@@ -27,65 +27,11 @@ public:
       // should be safe to charge at bac current up to nominal voltage (at best ~50%)
       chargeVoltage = bat->nomVoltage;
       chargeCurrent = bat->nomChargeCurrent;
-      // discharge at max until dead...
-      dischargeCurrent = bat->nomDischargeCurrent;
-      // 50% SOC
-      soc = 50.0f;
-      lastMS = bat->updateMillis;
       // set up first run...
       outMsg = 0;
       lastRunMS = millis() - 1000UL; // force immediate...
       isinit = true;
       return;
-    }
-
-    // update parameters when battery updates (in theory battery drivers should update about 1 per second...)
-    // if this is a false assumption, then we may want to move the ramp functions to the output path...
-    if(bat->updateMillis != lastMS) {
-      Serial.println("OUT UPDATE!");
-      // use ramp functions from old code
-      // derate algo and parallel algo can result in rapid changes...
-      // inverter does not like this - use ramp algorithm to slowly change to target.
-
-      if(bat->chargeCurrent == 0.0f) {
-        // stop charge = instant!
-        chargeCurrent = 0.0f;
-        chargeVoltage = bat->chargeVoltage;
-      } else {
-        // charge current
-        if(bat->chargeCurrent < chargeCurrent) {
-          // going down? rapid derate
-          float delta = chargeCurrent - bat->chargeCurrent;
-          delta /= 2.0f;
-          chargeCurrent -= delta;
-        } else if(bat->chargeCurrent > chargeCurrent) {
-          // going up? very slow
-          float delta = bat->chargeCurrent / 100.0f; //100s ramp up total
-          chargeCurrent += delta;
-          if(chargeCurrent > bat->chargeCurrent) chargeCurrent = bat->chargeCurrent;
-        }
-
-        // charge voltage
-        if(bat->chargeVoltage < chargeVoltage) {
-          // going down? rapid derate
-          float delta = chargeVoltage - bat->chargeVoltage;
-          delta /= 2.0f;
-          chargeVoltage -= delta;
-        } else if(bat->chargeVoltage > chargeVoltage) {
-          // going up? very slow
-          chargeVoltage += 0.01f; // 100 s per volt... 10s per unit that the inverter can notice
-          if(chargeVoltage > bat->chargeVoltage) chargeVoltage = bat->chargeVoltage;
-        }
-      }
-
-      // discharge current is all or nothing - just copy
-      dischargeCurrent = bat->dischargeCurrent;
-
-      // soc should also be safe to copy
-      soc = bat->soc;
-
-      // record last update
-      lastMS = bat->updateMillis;
     }
 
     // run outputs
@@ -195,6 +141,48 @@ private:
   }
 
   void do_351(void) {
+    // use ramp functions from old code
+    // derate algo and parallel algo can result in rapid changes...
+    // inverter does not like this - use ramp algorithm to slowly change to target.
+
+    if(bat->chargeCurrent < 0.0f) {
+      // do battery data available! revert to default...
+      chargeCurrent = bat->nomChargeCurrent;
+      chargeVoltage = bat->nomVoltage;
+    } else if(bat->chargeCurrent == 0.0f) {
+      // stop charge = instant!
+      chargeCurrent = 0.0f;
+      chargeVoltage = bat->chargeVoltage;
+      if(chargeVoltage < 0.0f) chargeVoltage = bat->nomVoltage;
+    } else {
+      // charge current
+      if(bat->chargeCurrent < chargeCurrent) {
+        // going down? rapid derate
+        float delta = chargeCurrent - bat->chargeCurrent;
+        delta /= 2.0f;
+        chargeCurrent -= delta;
+      } else if(bat->chargeCurrent > chargeCurrent) {
+        // going up? very slow
+        float delta = bat->chargeCurrent / 100.0f; //100s ramp up total
+        chargeCurrent += delta;
+        if(chargeCurrent > bat->chargeCurrent) chargeCurrent = bat->chargeCurrent;
+      }
+
+      // charge voltage
+      float targ = bat->chargeVoltage;
+      if(targ < 0.0f) targ = bat->nomVoltage;  // should never be possible, but put in a safe default anyway...
+      if(targ < chargeVoltage) {
+        // going down? rapid derate
+        float delta = chargeVoltage - targ;
+        delta /= 2.0f;
+        chargeVoltage -= delta;
+      } else if(targ > chargeVoltage) {
+        // going up? very slow
+        chargeVoltage += 0.02f; // 50 s per volt... 5s per unit that the inverter can notice
+        if(chargeVoltage > targ) chargeVoltage = targ;
+      }
+    }
+
     bufClear();
     float f = chargeVoltage * 10.0f;
     Serial.println(f);
@@ -202,7 +190,8 @@ private:
     f = chargeCurrent * 10.0f;
     Serial.println(f);
     bufPutS16(f); // Charge current limit
-    f = dischargeCurrent * 10.0f;
+    f = bat->dischargeCurrent * 10.0f;
+    if(f < 0.0f) f= bat->nomDischargeCurrent; // sanity check?
     Serial.println(f);
     bufPutS16(f); // Discharge current limit
     bufSend(0x351); // 6
@@ -210,14 +199,12 @@ private:
   
   void do_355(void) {
     bufClear();
-    float f = soc;
+    float f = bat->soc;
+    if(f < 0.0f) f = 50.0f; // sanity check
     Serial.println(f);
     bufPutU16(f); // SOC of single module or average value of system
-    if(bat->soh < 0.0f) {
-      f = 100.0f;
-    } else {
-      f = bat->soh;
-    }
+    f = bat->soh;
+    if(f < 0.0f) f = 100.0f;
     bufPutU16(f); // SOH of single module or average value of system
     bufSend(0x355); //, 4, mbuf);
   }
@@ -225,7 +212,7 @@ private:
   void do_356(void) {
     bufClear();
     float f = bat->voltage * 100.0f;
-    if(f < 0.0f) f = bat->nomVoltage; // sane default until battery updates...
+    if(f < 0.0f) f = bat->nomVoltage * 100.0f; // sane default until battery updates...
     Serial.println(f);
     bufPutS16(f); // Voltage of single module or average module voltage of system
     f = bat->current * 10.0f;
@@ -251,7 +238,7 @@ private:
     bufClear();
     uint16_t v = 0;
     if(chargeCurrent > 0.0f) v |= 0x80; // Charge enable
-    if(dischargeCurrent > 0.0f) v |= 0x40; // Discharge enable
+    if(bat->dischargeCurrent > 0.0f) v |= 0x40; // Discharge enable
     // b5 = Request force charge I*
     // b4 = Request force charge II*
     // b3 = Request full charge**
@@ -280,8 +267,6 @@ private:
   unsigned long lastOutMS;
   float chargeVoltage;
   float chargeCurrent;
-  float dischargeCurrent;
-  float soc;
   unsigned long lastMS;
   uint8_t buf[8];
   int bufi;

@@ -26,13 +26,13 @@ void batDaly::logTag(const char *tag) {
 }
 
 void batDaly::log(const char *tag, int value, int fmt) {
-  //return;
+  return;
   logTag(tag);
   Serial.println(value, fmt);
 }
 
 void batDaly::log(const char *tag, double value, int fmt) {
-  //return;
+  return;
   logTag(tag);
   Serial.println(value, fmt);
 }
@@ -62,6 +62,7 @@ int batDaly::run(void) {
     return -1;
   }
   while(i != 0) {  // fake loop so we can break when needed
+#if 0
     Serial.print("Read ");
     Serial.print(myId());
     Serial.print(": ");
@@ -71,6 +72,7 @@ int batDaly::run(void) {
       Serial.print(" ");
     }
     Serial.println();
+#endif
     if(!runstate) {
       Serial.println("Unsollicited message - ignore.");
       break;
@@ -119,8 +121,8 @@ int batDaly::run(void) {
       return -1;
     }
     i -= len + 5;
-    Serial.print("remainder: ");
-    Serial.println(i);
+    // Serial.print("remainder: ");
+    // Serial.println(i);
     if(i > 0) {
       // fake a read of the remaining bytes
       memmove(buf, buf + len + 5, i);
@@ -168,12 +170,14 @@ bool batDaly::sendCommand(uint8_t cmd) {
   //uint8_t txbuf[] = { 0xA5, 0x40, 0x90, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7D };
   txbuf[2] = cmd;
   txbuf[12] = calcCRC(txbuf, 12);
+#if 0
   Serial.print("TX: ");
   for (int i = 0; i < sizeof(txbuf); i++) {
     Serial.print(txbuf[i], HEX);
     Serial.print(" ");
   }
   Serial.println();
+#endif
   int i = uart->write(txbuf, sizeof(txbuf));
   if (i != sizeof(txbuf)) {
     Serial.println("write failed!");
@@ -233,8 +237,8 @@ bool batDaly::handleRx(int len) {
   }
   // 2 = command
   uint8_t cmd = get8();
-  Serial.print("COMMAND: ");
-  Serial.println(cmd, HEX);
+  // Serial.print("COMMAND: ");
+  // Serial.println(cmd, HEX);
   // 3 = data length
   i = get8();
   if (i != 8) {

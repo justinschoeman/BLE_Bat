@@ -44,6 +44,7 @@ int batVestwoods::run(void) {
     return -1;
   }
   while (i != 0) {  // fake loop so we can break when needed
+#if 0
     Serial.print("Read ");
     Serial.print(myId());
     Serial.print(": ");
@@ -53,6 +54,7 @@ int batVestwoods::run(void) {
       Serial.print(" ");
     }
     Serial.println();
+#endif
     if (!runstate) {
       Serial.println("Unsollicited message - ignore.");
       break;
@@ -199,8 +201,8 @@ bool batVestwoods::handleRx(int len) {
   i = get8();
   // 5,6 = command
   i = get16();
-  Serial.print("command: ");
-  Serial.println(i, HEX);
+  // Serial.print("command: ");
+  // Serial.println(i, HEX);
   if (i == 0x0001) return do0001();
   Serial.println("BAD COMMAND!");
   return false;
