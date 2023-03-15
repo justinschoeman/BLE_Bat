@@ -436,8 +436,8 @@ bool batDaly::do95(void) {
   }
   runstate = 0;
   // test
-  Serial.println(myId());
-  bat->dump();
+  //Serial.println(myId());
+  //bat->dump();
   return true;
 }
 

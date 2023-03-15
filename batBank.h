@@ -20,7 +20,7 @@ public:
     } else {
       initParallel();
     }
-    out->dump();
+    // out->dump();
   }
 
   // arduino loop style function - call repeatedly, and this handles all logic internally
@@ -39,7 +39,7 @@ public:
     } else {
       runParallel();
     }
-    out->dump();
+    // out->dump();
   }
 
 private:

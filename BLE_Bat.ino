@@ -81,6 +81,41 @@ batBMSManager myBMSMan(myBMSs, bmsCount, BAT_CFG_POLL_TIME);
 // CAN output
 outPylonCAN myOut(myBATs[6]);
 
+// dump battery states for serial logging
+unsigned long dumpMS = 0UL;
+int dumpState = 0;
+void dumper(void) {
+  if(millis() - dumpMS < 987UL) return; // offset time to try avoid bunching
+  dumpMS = millis();
+  Serial.println("<<<<<");
+  switch(dumpState) {
+    default:
+      // dump Vestwoods bats together for sync
+      myBATs[0]->dump(1);
+      myBATs[1]->dump(1);
+      myBATs[2]->dump(1);
+      myBATs[3]->dump(1);
+      dumpState = 1;
+      break;
+    case 1:
+      // Vestwood bank
+      myBATs[5]->dump(0);
+      dumpState++;
+      break;
+    case 2:
+      // Daly
+      myBATs[4]->dump(1);
+      dumpState++;
+      break;
+    case 3:
+      // Vestwood bank
+      myBATs[6]->dump(0);
+      dumpState++;
+      break;
+  }
+  Serial.println(">>>>>");
+}
+
 void setup() {
   Serial.begin(115200);
   while (!Serial) {}
@@ -120,6 +155,8 @@ void setup() {
 // main loop
 void loop() {
   esp_task_wdt_reset();
+  // can output (run at start so we at least output dummy can until ble is up...)
+  myOut.run();
   // run BLE manager to discover all required devices
   int i = myBLEMan.run();
   if(i < 0) {
@@ -155,10 +192,12 @@ void loop() {
   myVestDerate.run();
   // parallel bank
   myAllBank.run();
-  // can output
-  myOut.run();
+  // dump/log state
+  dumper();
 
+#if 0
   // test dump
+  Serial.println(millis());
   Serial.print("Daly: ");
   Serial.print(myBATs[4]->voltage);
   Serial.print(" ");
@@ -193,6 +232,7 @@ void loop() {
   Serial.print(myBATs[6]->soc);
   Serial.print(" ");
   Serial.println(myBATs[6]->current);
+#endif
 }
 
 #endif

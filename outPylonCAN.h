@@ -183,6 +183,14 @@ private:
       }
     }
 
+    // serial logging...
+    Serial.println("<<<<<");
+    Serial.print("Out_chargeVoltage = ");
+    Serial.println(chargeVoltage);
+    Serial.print("Out_chargeCurrent = ");
+    Serial.println(chargeCurrent);
+    Serial.println(">>>>>");
+
     bufClear();
     float f = chargeVoltage * 10.0f;
     Serial.println(f);
