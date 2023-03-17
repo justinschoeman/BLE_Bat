@@ -138,7 +138,7 @@ private:
       Serial.print(buf[i]);
     }
     Serial.println();
-    //can.sendMsgBuf(cmd, 0, bufi, buf);
+    can.sendMsgBuf(cmd, 0, bufi, buf);
   }
 
   void do_351(void) {
