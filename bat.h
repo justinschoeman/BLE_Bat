@@ -110,58 +110,82 @@ public:
       Serial.print("_nomDischargeCurrent = ");
       Serial.println(nomDischargeCurrent);
     }
-    Serial.print(name);
-    Serial.print("_chargeCurrent = ");
-    Serial.println(chargeCurrent);
-    Serial.print(name);
-    Serial.print("_chargeVoltage = ");
-    Serial.println(chargeVoltage);
-    Serial.print(name);
-    Serial.print("_dischargeCurrent = ");
-    Serial.println(dischargeCurrent);
-    Serial.print(name);
-    Serial.print("_soh = ");
-    Serial.println(soh);
-    Serial.print(name);
-    Serial.print("_soc = ");
-    Serial.println(soc);
-    Serial.print(name);
-    Serial.print("_voltage = ");
-    Serial.println(voltage, 3);
-    Serial.print(name);
-    Serial.print("_current = ");
-    Serial.println(current, 3);
-    Serial.print(name);
-    Serial.print("_temperature = ");
-    Serial.println(temperature);
+    if(chargeCurrent != -1.0f) {
+      Serial.print(name);
+      Serial.print("_chargeCurrent = ");
+      Serial.println(chargeCurrent);
+    }    
+    if(chargeVoltage != -1.0f) {
+      Serial.print(name);
+      Serial.print("_chargeVoltage = ");
+      Serial.println(chargeVoltage);
+    }
+    if(dischargeCurrent != -1.0f) {
+      Serial.print(name);
+      Serial.print("_dischargeCurrent = ");
+      Serial.println(dischargeCurrent);
+    }
+    if(soh != -1.0f) {
+      Serial.print(name);
+      Serial.print("_soh = ");
+      Serial.println(soh);
+    }      
+    if(soc != -1.0f) {
+      Serial.print(name);
+      Serial.print("_soc = ");
+      Serial.println(soc);
+    }
+    if(voltage != -1.0f) {
+      Serial.print(name);
+      Serial.print("_voltage = ");
+      Serial.println(voltage, 3);
+    }
+    if(current != -1.0f) {
+      Serial.print(name);
+      Serial.print("_current = ");
+      Serial.println(current, 3);
+    }
+    if(temperature != -1.0f) {
+      Serial.print(name);
+      Serial.print("_temperature = ");
+      Serial.println(temperature);
+    }
     Serial.print(name);
     Serial.print("_balancing = ");
     Serial.println(balancing);
     Serial.print(name);
     Serial.print("_minCellVoltageNumber = ");
     Serial.println(minCellVoltageNumber);
-    Serial.print(name);
-    Serial.print("_minCellVoltage = ");
-    Serial.println(minCellVoltage, 3);
+    if(minCellVoltage != -1.0f) {
+      Serial.print(name);
+      Serial.print("_minCellVoltage = ");
+      Serial.println(minCellVoltage, 3);
+    }
     Serial.print(name);
     Serial.print("_maxCellVoltageNumber = ");
     Serial.println(maxCellVoltageNumber);
-    Serial.print(name);
-    Serial.print("_maxCellVoltage = ");
-    Serial.println(maxCellVoltage, 3);
-    for(int i = 0; level > 0 && i < numCells; i++) {
+    if(maxCellVoltage != -1.0f) {
       Serial.print(name);
-      Serial.print("_CellV_");
-      Serial.print(i);
-      Serial.print(" = ");
-      Serial.println(cells[i].voltage, 3);
+      Serial.print("_maxCellVoltage = ");
+      Serial.println(maxCellVoltage, 3);
+    }
+    for(int i = 0; level > 0 && i < numCells; i++) {
+      if(cells[i].voltage != -1.0f) {
+        Serial.print(name);
+        Serial.print("_CellV_");
+        Serial.print(i);
+        Serial.print(" = ");
+        Serial.println(cells[i].voltage, 3);
+      }
     }
     for(int i = 0; level > 1 && i < numCells; i++) {
-      Serial.print(name);
-      Serial.print("_CellT_");
-      Serial.print(i);
-      Serial.print(" = ");
-      Serial.println(cells[i].temperature);
+      if(cells[i].temperature != -1.0f) {
+        Serial.print(name);
+        Serial.print("_CellT_");
+        Serial.print(i);
+        Serial.print(" = ");
+        Serial.println(cells[i].temperature);
+      }
     }
   }
 };

@@ -9,14 +9,15 @@
 
   parent must init can:
   CAN.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ);
+  CAN.setMode(MCP_NORMAL); 
 
 */
 
 
 class outPylonCAN {
 public:
-  //outPylonCAN(MCP_CAN & can_) : can(can_) {
-  outPylonCAN(batBat * bat_) : bat(bat_) {
+  outPylonCAN(MCP_CAN & can_, batBat * bat_) : can(can_), bat(bat_) {
+  //outPylonCAN(batBat * bat_) : bat(bat_) {
     isinit = false;
   }
 
@@ -209,6 +210,7 @@ private:
     bufClear();
     float f = bat->soc;
     if(f < 0.0f) f = 50.0f; // sanity check
+    if(chargeCurrent == 0.0f) f = 100.0f; // seems this may help stop charge?
     Serial.println(f);
     bufPutU16(f); // SOC of single module or average value of system
     f = bat->soh;
@@ -268,7 +270,7 @@ private:
   }
 
   batBat * bat;
-  //MCP_CAN & can;
+  MCP_CAN & can;
   bool isinit;
   int outMsg;
   unsigned long lastRunMS;

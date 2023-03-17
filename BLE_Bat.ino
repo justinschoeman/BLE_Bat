@@ -57,10 +57,10 @@ batDerate myVestDerate(myBATs[5]);
 
 // balancer
 balUnit myUnits[] = {
-  balUnit(myBATs[0], 32),
-  balUnit(myBATs[1], 33),
-  balUnit(myBATs[2], 25),
-  balUnit(myBATs[3], 26)
+  balUnit(myBATs[0], 26), //32),
+  balUnit(myBATs[1], 25), //33),
+  balUnit(myBATs[2], 33), //25),
+  balUnit(myBATs[3], 32)  //26)
 };
 int balCount = sizeof(myUnits) / sizeof(myUnits[0]);
 balBank myBal(myUnits, balCount, false);
@@ -79,7 +79,9 @@ int bmsNum;
 batBMSManager myBMSMan(myBMSs, bmsCount, BAT_CFG_POLL_TIME);
 
 // CAN output
-outPylonCAN myOut(myBATs[6]);
+#define CAN_CS 5
+MCP_CAN myCAN(CAN_CS); //set CS pin for can controlelr
+outPylonCAN myOut(myCAN, myBATs[6]);
 
 // dump battery states for serial logging
 unsigned long dumpMS = 0UL;
@@ -150,6 +152,16 @@ void setup() {
   // initialise banks
   myVestBank.init();
   myAllBank.init();
+
+  // initialise CAN
+  if(myCAN.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ) == CAN_OK) {
+    Serial.println("MCP2515 Initialized Successfully!");
+  } else {
+    Serial.println("Error Initializing MCP2515...");
+    esp_restart();
+    while(1) {}
+  }
+  myCAN.setMode(MCP_NORMAL); 
 }
 
 // main loop

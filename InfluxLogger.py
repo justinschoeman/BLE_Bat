@@ -6,6 +6,7 @@
 import re
 import serial
 from time import sleep
+from datetime import datetime
 import traceback
 import influxdb_client
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -60,7 +61,7 @@ def log():
             ln = port.readline().decode('ascii', 'replace').strip()
             #print("read: '%s'" % ln)
             if cfg_echo:
-                print('%s' % ln)
+                print('%s : %s' % (datetime.now(), ln))
             if ln == '':
                 print("timeout")
                 errcnt = errcnt + 1

@@ -11,13 +11,19 @@ public:
     bulk(true),
     bulkMillis(0),    
     derateErrorCount(0),
-    lvLockout(false)
+    lvLockout(false),
+    lastDerate(false)
     {}
   
   void run(void) {
     if(bat->updateMillis == lastMillis) return;
     lastMillis = bat->updateMillis;
-    Serial.println("RUN DERATE!");
+    Serial.print("RUN DERATE: ");
+    Serial.print(bat->myId());
+    Serial.print(" ");
+    Serial.print(bat->minCellVoltage);
+    Serial.print(" ");
+    Serial.println(bat->maxCellVoltage);
 
     // sanity check inputs
     // in older tests, batteries sometimes spit out bad data for a bit - ignore it
@@ -64,7 +70,7 @@ public:
       // overvoltage - shut off charging...
       Serial.println("OVERVOLTAGE!");
       setChargeI(0.0f);
-      setChargeV(bat->voltage); // go no higher
+      setChargeV(bat->voltage - 1.0f); // go no higher
     } else {
       // not overvoltage - set sane target voltage
       // always start with some sane defaults
@@ -77,7 +83,14 @@ public:
 
       // and set current based on derate curve
       if(bat->maxCellVoltage > cfgCellMaxDerateV) {
-        // derating
+        Serial.println("derating!");
+        // try an exponential derate - the old algo is non-linear and can never produce a stable closed loop current...
+        const float td_ = cfgCellMaxV - cfgCellMaxDerateV;
+        const float td = td_ * td_ * td_ * td_;
+        float t = cfgCellMaxV - bat->maxCellVoltage;
+        float r = (t * t * t * t) / td;
+        setChargeI(bat->nomChargeCurrent * r);        
+/*        // derating
         Serial.println("derating!");
         float t = cfgCellMaxV - bat->maxCellVoltage;
         t /= cfgCellMaxV - cfgCellMaxDerateV; // proportional over derate range
@@ -85,7 +98,7 @@ public:
         // this is an extra gotcha from my old production code
         // above some arbitrary hard limit, drastically reduce current...
         // test - hard limit current in closing phases...
-        if(bat->maxCellVoltage > 3.5f) bat->chargeCurrent /= 10.0f; // max 15A
+        if(bat->maxCellVoltage > 3.5f) bat->chargeCurrent /= 10.0f; // max 15A */
       } else {
         // no derate - default to nominal
         setChargeI(bat->nomChargeCurrent);
@@ -113,8 +126,9 @@ public:
       if(bat->minCellVoltage < cfgCellMinDerateV) {
         // derate soc
         float t = bat->minCellVoltage - cfgCellMinV;
-        float t2 = cfgCellMinDerateV - cfgCellMinV;
-        t = (t * t) / (t2 * t2);
+        const float t2_ = cfgCellMinDerateV - cfgCellMinV;
+        const float t2 = t2_ * t2_;
+        t = (t * t) / t2;
         t *= 100.0f;
         if(t < bat->soc) {
           Serial.println("LOW VOLTAGE DERATE SOC");
@@ -131,6 +145,26 @@ public:
     Serial.println(bat->dischargeCurrent);
     Serial.print("soc: ");
     Serial.println(bat->soc);
+    // log battery state on transitions
+    if(lastDerate) {
+      // was derating
+      if(bat->dischargeCurrent == bat->nomDischargeCurrent && bat->chargeCurrent == bat->nomChargeCurrent) {
+        // no longer derating
+        bat->dump(3);
+        lastDerate = false;
+      } else {
+        // still derating
+      }
+    } else {
+      // was not derating
+      if(bat->dischargeCurrent == bat->nomDischargeCurrent && bat->chargeCurrent == bat->nomChargeCurrent) {
+        // still not derating
+      } else {
+        // now derating
+        bat->dump(3);
+        lastDerate = true;
+      }
+    }
   }
 
 private:
@@ -170,6 +204,7 @@ private:
   int derateErrorCount;
   bool lvLockout;
   unsigned long lvLockoutMillis;
+  bool lastDerate;
 
   // fixme - config should be configurable...
 #if 1
