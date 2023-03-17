@@ -236,8 +236,10 @@ private:
   
   void do_359(void) {
     bufClear();
-    bufPutU16(0); // protection
-    bufPutU16(0); // alarm
+    bufPutU8(2); // protection
+    bufPutU8(0); // protection
+    bufPutU8(0); // alarm
+    bufPutU8(0); // alarm
     bufPutU8(1); // module count
     bufPutU8('P'); // P
     bufPutU8('N'); // N
