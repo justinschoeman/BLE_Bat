@@ -200,7 +200,7 @@ private:
     Serial.println(f);
     bufPutS16(f); // Charge current limit
     f = bat->dischargeCurrent * 10.0f;
-    if(f < 0.0f) f= bat->nomDischargeCurrent; // sanity check?
+    if(f < 0.0f) f= bat->nomDischargeCurrent * 10.0f; // sanity check?
     Serial.println(f);
     bufPutS16(f); // Discharge current limit
     bufSend(0x351); // 6
