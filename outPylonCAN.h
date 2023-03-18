@@ -236,9 +236,9 @@ private:
   
   void do_359(void) {
     bufClear();
-    bufPutU8(2); // protection
+    bufPutU8(chargeCurrent > 0.0f ? 0 : 2); // protection
     bufPutU8(0); // protection
-    bufPutU8(0); // alarm
+    bufPutU8(chargeCurrent > 0.0f ? 0 : 2); // alarm
     bufPutU8(0); // alarm
     bufPutU8(1); // module count
     bufPutU8('P'); // P

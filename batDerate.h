@@ -18,21 +18,29 @@ public:
   void run(void) {
     if(bat->updateMillis == lastMillis) return;
     lastMillis = bat->updateMillis;
+    // daly occasionally spits out bad data - need to try detect and ignore it.
+    float lMax = -1.0f;
+    for(int i = 0; i < bat->numCells; i++) {
+      if(bat->cells[i].voltage > lMax) lMax = bat->cells[i].voltage;
+    }
     Serial.print("RUN DERATE: ");
     Serial.print(bat->myId());
     Serial.print(" ");
     Serial.print(bat->minCellVoltage);
     Serial.print(" ");
-    Serial.println(bat->maxCellVoltage);
+    Serial.print(bat->maxCellVoltage);
+    Serial.print(" ");
+    Serial.println(lMax);
 
     // sanity check inputs
     // in older tests, batteries sometimes spit out bad data for a bit - ignore it
-    if(bat->voltage < 60.0f && bat->minCellVoltage < 4.0f) {
+    if(bat->voltage < 60.0f && bat->minCellVoltage < 4.0f && (lMax < 0.0f || bat->maxCellVoltage <= lMax+0.2f)) {
       // total battery voltage < 60V and minimum cell voltage < 4V
       // assume OKish
       derateErrorCount = 0;
     } else {
       Serial.println("BAD DATA!");
+      bat->dump(4);
       derateErrorCount++;
       if(derateErrorCount > 5) {
         Serial.println("TOO MUCH BAD DATA - ATTEMPT REBOOT!");
