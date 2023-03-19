@@ -15,6 +15,7 @@
 #include "batBank.h"
 #include "batDerate.h"
 #include "outPylonCAN.h"
+#include "batBlink.h"
 #include "config.h"
 
 #define BUZZER_PIN 27
@@ -82,6 +83,9 @@ batBMSManager myBMSMan(myBMSs, bmsCount, BAT_CFG_POLL_TIME);
 #define CAN_CS 5
 MCP_CAN myCAN(CAN_CS); //set CS pin for can controlelr
 outPylonCAN myOut(myCAN, myBATs[6]);
+
+// Status Blinker
+batBlink myBlink(2, 200UL, 200UL);
 
 // dump battery states for serial logging
 unsigned long dumpMS = 0UL;
@@ -169,6 +173,8 @@ void loop() {
   esp_task_wdt_reset();
   // can output (run at start so we at least output dummy can until ble is up...)
   myOut.run();
+  // status blinker
+  myBlink.run();
   // run BLE manager to discover all required devices
   int i = myBLEMan.run();
   if(i < 0) {
@@ -178,6 +184,9 @@ void loop() {
   }
   if(i == 0) return; // still discovering BLE devices
   // fall through when all devices discovered...
+
+  // update blink timers (not needed to do this each time in loop, but not worth the effort to set a flag not to)
+  myBlink.setTimes(1000UL, 1000UL);
 
   // normal run - run bms engines
   myBMSMan.run();
