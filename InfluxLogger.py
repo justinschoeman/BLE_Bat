@@ -16,7 +16,8 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 cfg_echo = True
 # serial
 #cfg_port = '/dev/ttyUSB0'
-cfg_port = '/dev/serial/by-path/pci-0000:00:15.0-usb-0:2.4:1.0-port0'
+#cfg_port = '/dev/serial/by-path/pci-0000:00:15.0-usb-0:2.4:1.0-port0'
+cfg_port = '/dev/serial/by-path/pci-0000:00:15.0-usb-0:2.1:1.0-port0'
 cfg_baud = 115200
 #influx
 cfg_bucket = "battery"

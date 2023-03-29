@@ -78,7 +78,7 @@ public:
     lastTime = testms;
     Serial.println("BALANCER RUN!");
     unsigned long oldest = 0;
-    float min_voltage = 999.0f;
+    float max_voltage = 0.0f;
     float min_current = 999.0f;
     float min_bal_voltage = 999.0f;
     for(int i = 0; i < numUnits; i++) {
@@ -89,13 +89,13 @@ public:
         oldest = BAL_STALE * 2; // force stale, if not yet updated
       }
       if(!units[i].active && !units[i].isLockout() && units[i].bat->current < min_current) min_current = units[i].bat->current;
-      if(units[i].bat->voltage < min_voltage) min_voltage = units[i].bat->voltage;
+      if(units[i].bat->voltage > max_voltage) max_voltage = units[i].bat->voltage;
       if(!units[i].active && !units[i].isLockout() && units[i].bat->voltage < min_bal_voltage) min_bal_voltage = units[i].bat->voltage;
     }
     Serial.print("Age: ");
     Serial.println(oldest);
-    Serial.print("Min V: ");
-    Serial.println(min_voltage);
+    Serial.print("Max V: ");
+    Serial.println(max_voltage);
     Serial.print("min I: ");
     Serial.println(min_current);
     Serial.print("Bal Min V: ");
@@ -113,19 +113,28 @@ public:
       stopAll();
       return;
     }
-    // min voltage
-    if(min_voltage < BAL_MIN_VOLTAGE) {
+    // max voltage
+    if(max_voltage < BAL_MIN_VOLTAGE) {
       Serial.println("VOLTAGE TOO LOW - STOPPING BALANCER!");
       stopAll();
       return;
     }
     // find all cells > x above lowest voltage (not locked out)
     for(int i = 0; i < numUnits; i++) {
+      Serial.print(i);
+      Serial.print(" ");
+      Serial.print(units[i].isLockout());
+      Serial.print(" ");
+      Serial.print(units[i].active);
+      Serial.print(" ");
+      Serial.println(units[i].bat->voltage);
       if(units[i].active) {
         // active cells, we only evaluate whether or not to turn them off
         if(units[i].bat->voltage <= min_bal_voltage) {
           Serial.print("Balance end cell: ");
-          Serial.println(i);
+          Serial.print(i);
+          Serial.print(" ");
+          Serial.println(units[i].bat->voltage);
           pinOff(i);
         }
         continue;
