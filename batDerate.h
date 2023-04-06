@@ -183,8 +183,10 @@ private:
   // FIXME - do this once every X cycles
   bool testFloat(void) {
     if(bat->minCellVoltage < cfgCellFloatStartV) return false; // at least one cell is too low
-    if(bat->current > 0.0f) return false; // discharging
-    if(-bat->current > bat->nomChargeCurrent * 0.03f) return false; // discharging at more than 3% of nom
+    if(bat->maxCellVoltage - bat->minCellVoltage > cfgCellFloatDeltaV) return false; // at least one cell is too low
+    // any of the above conditions is really sufficient to float...
+    //if(bat->current > 0.0f) return false; // discharging
+    //if(-bat->current > bat->nomChargeCurrent * 0.03f) return false; // charging at more than 3% of nom
     Serial.println("FLOAT OK");
     return true;
   }
@@ -223,10 +225,11 @@ private:
   const float cfgCellMinDerateV = 3.0f; // minimum cell voltage before we derate
   const float cfgCellMinV = 2.8f; // minimum cell voltage
   const float cfgCellFloatStartV = 3.55f; // target minimum cell voltage in float mode
+  const float cfgCellFloatDeltaV = 0.03f; // target minimum cell voltage difference in float mode
   const float cfgCellFloatTargetV = 3.4f; // target charge voltage in float mode
   const float cfgCellFloatEndV = 3.35f; // end float before this voltage
   const unsigned long cfgLvLockoutMillis = (5UL * 60UL * 1000UL); // min low voltage recovery time before we restore dischare caps
-  const unsigned long cfgFloatMillis = (30UL * 60UL * 1000UL); // must be in float conditions for at least this long before activating float mode
+  const unsigned long cfgFloatMillis = (1UL * 60UL * 1000UL); // must be in float conditions for at least this long before activating float mode
 #else
   // max lifepo4
   const float cfgCellMaxV = 3.65f; // maximum cell voltage
