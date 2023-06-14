@@ -61,11 +61,14 @@ public:
       Serial.print(" : ");
       Serial.println(units[i].pin);
       pinOn(i);
-      delay(200);
+      delay(20  0);
       pinOff(i);
       units[i].active = false;
       units[i].lockTime = 0;
     }
+    // relay test
+    //esp_restart();
+    //while(1) {}
   }
 
   // arduino loop style function - call repeatedly, and this handles all logic internally
