@@ -11,7 +11,7 @@
 #include "batDaly.h"
 #include "batBMSManager.h"
 #include "bat.h"
-//#include "batBalancer.h"
+#include "batBalancerSW.h"
 #include "batBank.h"
 #include "batDerate.h"
 #include "outPylonCAN.h"
@@ -57,14 +57,14 @@ batDerate myDalyDerate(myBATs[4]);
 batDerate myVestDerate(myBATs[5]);
 
 // balancer
-//balUnit myUnits[] = {
-//  balUnit(myBATs[0], 26), //32),
-//  balUnit(myBATs[1], 25), //33),
-//  balUnit(myBATs[2], 33), //25),
-//  balUnit(myBATs[3], 32)  //26)
-//};
-//int balCount = sizeof(myUnits) / sizeof(myUnits[0]);
-//balBank myBal(myUnits, balCount, false);
+balUnit myUnits[] = {
+  balUnit(myBATs[0], 26), //32),
+  balUnit(myBATs[1], 25), //33),
+  balUnit(myBATs[2], 33), //25),
+  balUnit(myBATs[3], 32)  //26)
+};
+int balCount = sizeof(myUnits) / sizeof(myUnits[0]);
+balBank myBal(myUnits, balCount, true);
 
 // BMS drivers
 batBMS* myBMSs[] = {
@@ -127,7 +127,7 @@ void setup() {
   while (!Serial) {}
 
   // get balancer pins into sane state ASAP
-  //myBal.init();
+  myBal.init();
 
   // bleep to indicate reboot
   pinMode(BUZZER_PIN, OUTPUT);
@@ -202,7 +202,7 @@ void loop() {
   }
 
   // now run balancer
-  //myBal.run();
+  myBal.run();
 
   // and battery banks
   // 4 battery vestwoods:
